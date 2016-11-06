@@ -1,0 +1,2 @@
+tx  rx  gpio4 gpio5 A gpio16 gpio14 gpio12 gpio13
+-

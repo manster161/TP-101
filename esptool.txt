@@ -1,0 +1,16 @@
+
+
+sudo ln -s /dev/tty.wch\ ch341\ USB\=\>RS232\ 1450 /dev/tty.USB0
+
+
+Flash size 32Mbit: 512KB+512KB
+boot_v1.2+.bin      	0x00000
+user1.1024.new.2.bin  	0x01000
+esp_init_data_default.bin	0x3fc000 (optional)
+blank.bin           	0x7e000 & 0x3fe000
+
+Works on ESP8266-12e:
+cd Documents/Arduino/ESP8266Firmware/esp_iot_sdk_v1.5.0_15_11_27/esp_iot_sdk_v1.5.0/bin/
+esptool.py --port /dev/tty.USB0  write_flash --flash_mode qio --flash_size 32m 0x00000 boot_v1.2.bin 0x01000 at/512+512/user1.1024.new.2.bin 0x3fc000 esp_init_data_default.bin 0x7e000 blank.bin 0x3fe000 blank.bin
+
+sudo esptool.py --port /dev/ttyUSB0  write_flash --flash_mode qio --flash_size 32m 0x00000 .pioenvs/esp12e/firmware.bin
