@@ -1,8 +1,10 @@
 #ifndef _MOISTURESENSOR_H_
 #define _MOISTURESENSOR_H_
-class MoistureSensor{
+#include "interfaces/analogsensor.h"
+
+class MoistureSensor : public AnalogSensor {
 public:
-  MoistureSensor(short);
+  MoistureSensor();
   ~MoistureSensor();
   float GetMoistureLevel();
 };
