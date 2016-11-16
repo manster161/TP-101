@@ -4,13 +4,13 @@ String webString;
 #include "config/secrets.h"
 #include "settings.h"
 
- Network::Network(){
+ Network::Network(ESP8266WebServer* server){
   wifiClient = new WiFiClient();
   httpClient = new HTTPClient();
   wifiMulti = new ESP8266WiFiMulti();
 }
 
-void Network::Init(void){
+void Network::Init(){
   int foundNetworks = ScanNetworks();
 
   for (int i = 0; i < foundNetworks; i++){

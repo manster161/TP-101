@@ -33,7 +33,7 @@ void setup(void){
   pinMode(RELAY3, OUTPUT);
   pinMode(RELAY4, OUTPUT);
 
-  Network* network = new Network();
+  Network* network = new Network(&server);
   tp101 = new Tp101();
 
 }

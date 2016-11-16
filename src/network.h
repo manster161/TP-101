@@ -9,7 +9,7 @@
 
 class Network {
 public:
-  Network();
+  Network(ESP8266WebServer* server);
   void Init(void);
   int ScanNetworks(void);
   bool ConnectToNetwork(const char*, const char*,ESP8266WiFiMulti*, HTTPClient*);
