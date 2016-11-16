@@ -12,6 +12,20 @@ DHT dht(DHTPIN, DHTTYPE, 11);
 
 Tp101* tp101;
 
+
+void HandleRoot() {
+  server.send(200, "text/plain", "Hello from the weather esp8266, read from /temp or /humidity");
+  delay(100);
+}
+
+bool SetupServer(){
+  server.on("/", HandleRoot);
+
+  server.begin();
+  Serial.println("HTTP server started");
+
+}
+
 void setup(void){
 
   pinMode(RELAY1, OUTPUT);
@@ -19,7 +33,7 @@ void setup(void){
   pinMode(RELAY3, OUTPUT);
   pinMode(RELAY4, OUTPUT);
 
-  Network* network = new Network(server);
+  Network* network = new Network();
   tp101 = new Tp101();
 
 }

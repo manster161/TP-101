@@ -1,11 +1,10 @@
 #include "network.h"
 #include <stdio.h>
 String webString;
+#include "config/secrets.h"
+#include "settings.h"
 
-
-
-
-void Network::Network(ESP8266WebServer& server){
+ Network::Network(){
   wifiClient = new WiFiClient();
   httpClient = new HTTPClient();
   wifiMulti = new ESP8266WiFiMulti();
@@ -81,17 +80,4 @@ int Network::ScanNetworks(){
   }
 
   return foundNetworks;
-}
-
-void HandleRoot() {
-  server.send(200, "text/plain", "Hello from the weather esp8266, read from /temp or /humidity");
-  delay(100);
-}
-
-bool Network::SetupServer(){
-  server.on("/", HandleRoot);
-
-  server.begin();
-  Serial.println("HTTP server started");
-
 }
