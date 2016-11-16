@@ -15,4 +15,5 @@ Tp101::Tp101(Network* network){
 
 void Tp101::Init(){
   network->Init();
+  
 }
