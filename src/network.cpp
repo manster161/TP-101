@@ -5,6 +5,7 @@ String webString;
 #include "settings.h"
 
  Network::Network(ESP8266WebServer* server){
+  this->server = server; 
   wifiClient = new WiFiClient();
   httpClient = new HTTPClient();
   wifiMulti = new ESP8266WiFiMulti();

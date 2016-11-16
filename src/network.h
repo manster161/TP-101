@@ -20,7 +20,7 @@ public:
 private:
 
   ESP8266WiFiMulti* wifiMulti;
-  ///ESP8266WebServer& server;
+  ESP8266WebServer* server;
   HTTPClient* httpClient;
   WiFiClient* wifiClient;
 };
