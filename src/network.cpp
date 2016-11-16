@@ -1,9 +1,11 @@
 #include "network.h"
+#include <stdio.h>
 String webString;
-ESP8266WebServer server(80);
 
- Network::Network(){
-//  server(80);// = new ESP8266WebServer(80);
+
+
+
+void Network::Network(ESP8266WebServer& server){
   wifiClient = new WiFiClient();
   httpClient = new HTTPClient();
   wifiMulti = new ESP8266WiFiMulti();

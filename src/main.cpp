@@ -2,12 +2,15 @@
 #include <Adafruit_Sensor.h>
 #include <DHT.h>
 #include "pins.h"
+#include <ESP8266WebServer.h>
+#include "tp101.h"
+#include "network.h"
 
 
-
-
-
+ESP8266WebServer server(80);
 DHT dht(DHTPIN, DHTTYPE, 11);
+
+Tp101* tp101;
 
 void setup(void){
 
@@ -15,6 +18,9 @@ void setup(void){
   pinMode(RELAY2, OUTPUT);
   pinMode(RELAY3, OUTPUT);
   pinMode(RELAY4, OUTPUT);
+
+  Network* network = new Network(server);
+  tp101 = new Tp101();
 
 }
 
