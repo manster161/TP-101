@@ -5,22 +5,21 @@ String webString;
 #include "settings.h"
 
  Network::Network(ESP8266WebServer* server){
-  this->server = server; 
+  this->server = server;
   wifiClient = new WiFiClient();
   httpClient = new HTTPClient();
   wifiMulti = new ESP8266WiFiMulti();
 }
 
-void Network::Init(){
+bool Network::Init(){
   int foundNetworks = ScanNetworks();
 
   for (int i = 0; i < foundNetworks; i++){
     if (WiFi.SSID(i) == Secrets::ssid){
-      ConnectToNetwork(Secrets::ssid, Secrets::password, wifiMulti, httpClient);
-      break;
+      return ConnectToNetwork(Secrets::ssid, Secrets::password, wifiMulti, httpClient);
     }
   }
-
+  return false;
 }
 
 bool Network::ConnectToNetwork(const char* ssid, const char* password,ESP8266WiFiMulti* wifiMulti, HTTPClient* httpClient){
