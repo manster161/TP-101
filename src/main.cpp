@@ -5,11 +5,13 @@
 #include <ESP8266WebServer.h>
 #include "tp101.h"
 #include "network.h"
+#include <TickerScheduler.h>
 
+#define STATISTICS_TIMER 60000
 
 ESP8266WebServer server(80);
 DHT dht(DHTPIN, DHTTYPE, 11);
-
+TickerScheduler scheduler(1);
 Tp101* tp101;
 
 
@@ -37,32 +39,9 @@ void setup(void){
   tp101 = new Tp101(network);
 
 }
-
+void updateStatistics(){
+  tp101->UpdateStatistics();
+}
 void loop(void){
-
-  digitalWrite(RELAY1, HIGH);
-  delay(250);
-  digitalWrite(RELAY1, LOW);
-  delay(250);
-
-  digitalWrite(RELAY1, HIGH);
-  delay(250);
-  digitalWrite(RELAY1, LOW);
-  delay(250);
-
-
-  digitalWrite(RELAY2, HIGH);
-  delay(500);
-  digitalWrite(RELAY2, LOW);
-  delay(500);
-
-  digitalWrite(RELAY3, HIGH);
-  delay(500);
-  digitalWrite(RELAY3, LOW);
-  delay(500);
-
-  digitalWrite(RELAY4, HIGH);
-  delay(500);
-  digitalWrite(RELAY4, LOW);
-  delay(500);
+  scheduler.add(0, STATISTICS_TIMER,updateStatistics);
 }
