@@ -8,8 +8,9 @@
 
   }
 
- void init(short analogPin){
-   
+ bool MoistureSensor::init(short analogPin){
+
+   return true;
  }
 
   float MoistureSensor::GetMoistureLevel(){
