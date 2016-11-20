@@ -1,4 +1,4 @@
-#include "moisturesensor.h"
+  #include "moisturesensor.h"
 
 
   MoistureSensor::MoistureSensor(){
@@ -8,8 +8,14 @@
 
   }
 
- bool MoistureSensor::init(short analogPin){
 
+  float MoistureSensor::read(){
+
+    return 0;
+  }
+
+ bool MoistureSensor::init(){
+   pinMode(A0, INPUT);
    return true;
  }
 

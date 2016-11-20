@@ -3,5 +3,5 @@
 class AnalogSensor{
 public:
   virtual bool init(short) = 0;
-  virtual short read() = 0;
+  virtual float read() = 0;
 };

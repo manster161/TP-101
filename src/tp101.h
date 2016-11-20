@@ -4,12 +4,16 @@
 #include <DHT.h>
 #include "network.h"
 #include <ArduinoJson.h>
+#include "moisturesensor.h"
+
 class Tp101{
 public:
   Tp101(Network*);
   ~Tp101(void);
   void Init();
   void UpdateStatistics();
+  float GetTemperature();
+  float GetHumidity();
 private:
   StaticJsonBuffer<200> jsonBuffer;
   Relay* r1;
@@ -18,7 +22,9 @@ private:
   Relay* r4;
   DHT* dht;
   Network* network;
+  MoistureSensor* _moisturesensor;
   int foundNetworks = 0;
+  float _humidity, _temperature, _moisture;
 
 };
 

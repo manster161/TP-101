@@ -4,11 +4,12 @@
 
 
 
-class MoistureSensor : public AnalogSensor {
+class MoistureSensor  {
 public:
   MoistureSensor();
   ~MoistureSensor();
-  virtual bool init(short);
+   bool init(void);
+   float read(void);
   float GetMoistureLevel();
 private:
 
