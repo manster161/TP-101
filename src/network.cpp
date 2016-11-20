@@ -81,3 +81,33 @@ int Network::ScanNetworks(){
 
   return foundNetworks;
 }
+
+
+void Network::Post(float temp, float humidity){
+
+  Serial.println("Connecting");
+    if (wifiClient->connect(Secrets::host.c_str(), 80)){
+      String postStr = Secrets::apiKey;
+      postStr +="&field1=";
+      postStr += String(temp);
+      postStr +="&field2=";
+      postStr += String(humidity);
+      postStr += "\r\n\r\n";
+
+      wifiClient->print("POST /update HTTP/1.1\n");
+      wifiClient->print("Host: api.thingspeak.com\n");
+      wifiClient->print("Connection: close\n");
+      wifiClient->print("X-THINGSPEAKAPIKEY: "+ String(Secrets::apiKey) + "\n");
+      wifiClient->print("Content-Type: application/x-www-form-urlencoded\n");
+      wifiClient->print("Content-Length: ");
+      wifiClient->print(postStr.length());
+      wifiClient->print("\n\n");
+      wifiClient->print(postStr);
+      wifiClient->stop();
+      Serial.println("Posted:" + postStr);
+    }
+    else
+    {
+      Serial.println("Connect fail");
+    }
+  }

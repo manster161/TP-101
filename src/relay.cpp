@@ -2,16 +2,13 @@
 #include "relay.h"
 
 
-  char _pin = 0;
-  bool _isOn = false;
-  const char* _name;
-  char _buffer[20];
+
   Relay::Relay(char pin, const char* name){
     //Check if pin is valid
     _pin = pin;
     //Check lenght of name
-    _name = name;
-
+    sprintf(_namebuffer, "%s", name);
+    Serial.printf("Relay %s was created\n",_namebuffer);
     pinMode(_pin, OUTPUT);
     digitalWrite(_pin, LOW);
   }
@@ -20,7 +17,6 @@
     if (_isOn)
       return;
     digitalWrite(_pin, HIGH);
-
     _isOn = true;
   }
 
@@ -45,6 +41,6 @@
       sprintf(status, "%s", "off");
     }
 
-    sprintf(_buffer, "%s is %s", _name, status);
+    sprintf(_buffer, "%s is %s", _namebuffer, status);
     return _buffer;
   }

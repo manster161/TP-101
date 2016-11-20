@@ -13,6 +13,8 @@
 
 namespace Settings {
  int ConnectionTimeOut  = 10000;
+ float MaxTemp = 27;
+ float MinTemp = 20;
 }
 
 #endif

@@ -15,7 +15,7 @@ public:
   bool ConnectToNetwork(const char*, const char*,ESP8266WiFiMulti*, HTTPClient*);
   void HandleRoot(void);
   bool SetupServer(void);
-
+  void Post(float temp, float humidity);
 
 private:
 

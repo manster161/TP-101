@@ -7,7 +7,7 @@
 #include "network.h"
 #include <TickerScheduler.h>
 
-#define STATISTICS_TIMER 5000
+#define STATISTICS_TIMER 10000
 
 ESP8266WebServer server(80);
 DHT dht(DHTPIN, DHTTYPE, 11);
@@ -31,6 +31,7 @@ bool SetupServer(){
 void updateStatistics(){
   Serial.println("UpdateStatistics");
   tp101->UpdateStatistics();
+  tp101->Handle();
 }
 
 

@@ -12,6 +12,7 @@ public:
   ~Tp101(void);
   void Init();
   void UpdateStatistics();
+  void Handle();
   float GetTemperature();
   float GetHumidity();
 private:
@@ -25,7 +26,10 @@ private:
   MoistureSensor* _moisturesensor;
   int foundNetworks = 0;
   float _humidity, _temperature, _moisture;
-
+  float _maxTemp = 25;
+  float _minTemp = 20;
+  unsigned long _previousMillis = 0;
+  unsigned long _postInterval = 60000;
 };
 
 
