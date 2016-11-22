@@ -15,6 +15,9 @@ public:
   void Handle();
   float GetTemperature();
   float GetHumidity();
+  const char* GetStatus();
+  const char* GetNetwork();
+
 private:
   StaticJsonBuffer<200> jsonBuffer;
   Relay* r1;

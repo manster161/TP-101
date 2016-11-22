@@ -16,9 +16,10 @@ public:
   void HandleRoot(void);
   bool SetupServer(void);
   void Post(float temp, float humidity);
-
+  const char* GetIp();
+  const char* GetNetwork();
 private:
-
+  const char * IpToCharArray();
   ESP8266WiFiMulti* wifiMulti;
   ESP8266WebServer* server;
   HTTPClient* httpClient;

@@ -16,13 +16,17 @@ Tp101* tp101;
 
 
 void HandleRoot() {
-  server.send(200, "text/plain", "Hello from the weather esp8266, read from /temp or /humidity");
+  server.send(200, "text/plain", "Hello from TP-101.\nRead the statistcs at /statistics");
   delay(100);
+}
+
+void Statistics() {
+  server.send(200, "application/json", tp101->GetStatus());
 }
 
 bool SetupServer(){
   server.on("/", HandleRoot);
-
+  server.on("/statistcs", Statistics);
   server.begin();
   Serial.println("HTTP server started");
 
@@ -54,4 +58,5 @@ Serial.println("Create TP");
 
 void loop(void){
   scheduler.update();
+  server.handleClient();
 }

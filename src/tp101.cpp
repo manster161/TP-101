@@ -1,7 +1,8 @@
 #include "tp101.h"
 #include "pins.h"
+#include "ArduinoJson.h"
 
-
+StaticJsonBuffer<200> jsonBuffer;
 
 Tp101::Tp101(Network* network){
   r1 = new Relay(RELAY1, "Lights");
@@ -41,6 +42,20 @@ void Tp101::Handle(){
     r2->Off();
   }
 }
+
+const char* Tp101::GetStatus(){
+    JsonObject& root = jsonBuffer.createObject();
+
+    root["temp"] = _temperature;
+    root["humidity"] = _humidity;
+    root["moisture"] = _moisture;
+    root["ipaddress"] = network->GetIp();
+    root["network"] = network->GetNetwork();
+    root["localtime"] = "";
+    root["time"] = "";
+
+}
+
 void Tp101::UpdateStatistics(){
   float hum = dht->readHumidity();
 

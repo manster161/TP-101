@@ -3,7 +3,7 @@
 String webString;
 #include "config/secrets.h"
 #include "settings.h"
-
+#include <String.h>
  Network::Network(ESP8266WebServer* server){
   this->server = server;
   wifiClient = new WiFiClient();
@@ -82,6 +82,19 @@ int Network::ScanNetworks(){
   return foundNetworks;
 }
 
+const char * Network::IpToCharArray(){
+    IPAddress addr = WiFi.localIP();
+    String str = String(addr.toString());
+    return str.c_str();
+}
+
+const char * Network::GetIp(){
+  return IpToCharArray();
+}
+
+const char* Network::GetNetwork(){
+  return Secrets::ssid;
+}
 
 void Network::Post(float temp, float humidity){
 
