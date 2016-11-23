@@ -96,16 +96,47 @@ const char* Network::GetNetwork(){
   return Secrets::ssid;
 }
 
-void Network::Post(float temp, float humidity){
+const char * Network::GetTime(){
+  return "Unknown";
+}
+
+void Network::Post(String body){
+
+
+    if (wifiClient->connect(Secrets::host.c_str(), 80)){
+
+
+      wifiClient->print("POST /update HTTP/1.1\n");
+      wifiClient->print("Host: api.thingspeak.com\n");
+      wifiClient->print("Connection: close\n");
+      wifiClient->print("X-THINGSPEAKAPIKEY: "+ String(Secrets::apiKey) + "\n");
+      wifiClient->print("Content-Type: application/x-www-form-urlencoded\n");
+      wifiClient->print("Content-Length: ");
+      wifiClient->print(body.length());
+      wifiClient->print("\n\n");
+      wifiClient->print(body);
+      wifiClient->stop();
+      Serial.println("Posted:" + body);
+    }
+    else
+    {
+      Serial.println("Connect fail");
+    }
+}
+void Network::UpdateThingspeak(float temp, float humidity){
 
   Serial.println("Connecting");
+
+  String postStr = Secrets::apiKey;
+  postStr +="&field1=";
+  postStr += String(temp);
+  postStr +="&field2=";
+  postStr += String(humidity);
+  postStr += "\r\n\r\n";
+
+  Post(postStr.c_str());
     if (wifiClient->connect(Secrets::host.c_str(), 80)){
-      String postStr = Secrets::apiKey;
-      postStr +="&field1=";
-      postStr += String(temp);
-      postStr +="&field2=";
-      postStr += String(humidity);
-      postStr += "\r\n\r\n";
+
 
       wifiClient->print("POST /update HTTP/1.1\n");
       wifiClient->print("Host: api.thingspeak.com\n");

@@ -84,7 +84,7 @@ void Tp101::UpdateStatistics(){
     if(elapsedTime  >= _postInterval) {
       // save the last time you read the sensor
       _previousMillis = currentMillis;
-      network->Post(_temperature, _humidity);
+      network->UpdateThingspeak(_temperature, _humidity);
   }
   else{
     int secondsTillUpdate = (int) (_postInterval - elapsedTime)/1000;
