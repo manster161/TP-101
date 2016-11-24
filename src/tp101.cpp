@@ -1,6 +1,6 @@
 #include "tp101.h"
 #include "pins.h"
-#include "ArduinoJson.h"
+#include <ArduinoJson.h>
 
 StaticJsonBuffer<200> jsonBuffer;
 
@@ -22,6 +22,7 @@ void Tp101::Init(){
   network->Init();
   Serial.println("network initialization done");
   _moisturesensor->init();
+  this->network->UpdateTime();
 }
 
 float Tp101::GetTemperature(){

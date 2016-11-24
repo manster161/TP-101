@@ -16,6 +16,7 @@ public:
   void HandleRoot(void);
   bool SetupServer(void);
   void UpdateThingspeak(float temp, float humidity);
+  void UpdateTime();
   const char* GetTime();
   const char* GetIp();
   const char* GetNetwork();

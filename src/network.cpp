@@ -4,6 +4,11 @@ String webString;
 #include "config/secrets.h"
 #include "settings.h"
 #include <String.h>
+#include <ArduinoJson.h>
+
+
+StaticJsonBuffer<200> networkJsonBuffer;
+
  Network::Network(ESP8266WebServer* server){
   this->server = server;
   wifiClient = new WiFiClient();
@@ -13,13 +18,13 @@ String webString;
 
 bool Network::Init(){
   int foundNetworks = ScanNetworks();
-
+  bool connected = false;
   for (int i = 0; i < foundNetworks; i++){
     if (WiFi.SSID(i) == Secrets::ssid){
-      return ConnectToNetwork(Secrets::ssid, Secrets::password, wifiMulti, httpClient);
+      connected =  ConnectToNetwork(Secrets::ssid, Secrets::password, wifiMulti, httpClient);
     }
   }
-  return false;
+  return connected;
 }
 
 bool Network::ConnectToNetwork(const char* ssid, const char* password,ESP8266WiFiMulti* wifiMulti, HTTPClient* httpClient){
@@ -49,6 +54,8 @@ bool Network::ConnectToNetwork(const char* ssid, const char* password,ESP8266WiF
   Serial.println(WiFi.localIP());
   return true;
 }
+
+
 
 int Network::ScanNetworks(){
   WiFi.mode(WIFI_STA);
@@ -100,48 +107,55 @@ const char * Network::GetTime(){
   return "Unknown";
 }
 
-void Network::Post(String body){
 
 
-    if (wifiClient->connect(Secrets::host.c_str(), 80)){
+void Network::UpdateTime(){
+    Serial.println("Connecting to get curent  time");
+    if (wifiClient->connect(Secrets::timezonedb.c_str(), 80)){
+      Serial.println("Connected");
+      String s = "GET /v2/get-time-zone?key="
+      + Secrets::timezonedbApiKey + "&by=zone&format=json&zone=CET HTTP/1.1\r\nHost: "
+      + Secrets::timezonedb +"\r\nConnection: close\r\n\r\n";
+      wifiClient->println(s.c_str());
 
+      unsigned long timeout = millis();
+      while (wifiClient->available() == 0) {
 
-      wifiClient->print("POST /update HTTP/1.1\n");
-      wifiClient->print("Host: api.thingspeak.com\n");
-      wifiClient->print("Connection: close\n");
-      wifiClient->print("X-THINGSPEAKAPIKEY: "+ String(Secrets::apiKey) + "\n");
-      wifiClient->print("Content-Type: application/x-www-form-urlencoded\n");
-      wifiClient->print("Content-Length: ");
-      wifiClient->print(body.length());
-      wifiClient->print("\n\n");
-      wifiClient->print(body);
-      wifiClient->stop();
-      Serial.println("Posted:" + body);
+      if (millis() - timeout > 5000) {
+        Serial.println(">>> Client Timeout !");
+        wifiClient->stop();
+        return;
+      }
     }
-    else
-    {
-      Serial.println("Connect fail");
-    }
+
+    // Read all the lines of the reply from server and print them to Serial
+  while(wifiClient->available()){
+    String line = wifiClient->readStringUntil('\r');
+    JsonObject& root = networkJsonBuffer.parseObject(line.c_str());
+    setTime(root["timestamp"]);
+    Serial.print(root.prettyPrintTo(line));
+  }
 }
+}
+
 void Network::UpdateThingspeak(float temp, float humidity){
 
   Serial.println("Connecting");
 
-  String postStr = Secrets::apiKey;
+  String postStr = Secrets::thingSpeakApiKey;
   postStr +="&field1=";
   postStr += String(temp);
   postStr +="&field2=";
   postStr += String(humidity);
   postStr += "\r\n\r\n";
 
-  Post(postStr.c_str());
-    if (wifiClient->connect(Secrets::host.c_str(), 80)){
+    if (wifiClient->connect(Secrets::thingspeak.c_str(), 80)){
 
-
+      Serial.println("Connected");
       wifiClient->print("POST /update HTTP/1.1\n");
       wifiClient->print("Host: api.thingspeak.com\n");
       wifiClient->print("Connection: close\n");
-      wifiClient->print("X-THINGSPEAKAPIKEY: "+ String(Secrets::apiKey) + "\n");
+      wifiClient->print("X-THINGSPEAKAPIKEY: "+ String(Secrets::thingSpeakApiKey) + "\n");
       wifiClient->print("Content-Type: application/x-www-form-urlencoded\n");
       wifiClient->print("Content-Length: ");
       wifiClient->print(postStr.length());
