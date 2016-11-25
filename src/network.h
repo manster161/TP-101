@@ -20,6 +20,7 @@ public:
   const char* GetTime();
   const char* GetIp();
   const char* GetNetwork();
+  int GetTimestamp();
 private:
   const char * IpToCharArray();
   void Post(String);

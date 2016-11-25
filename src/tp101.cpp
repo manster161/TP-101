@@ -52,8 +52,8 @@ const char* Tp101::GetStatus(){
     root["moisture"] = _moisture;
     root["ipaddress"] = network->GetIp();
     root["network"] = network->GetNetwork();
-    root["localtime"] = "";
-    root["time"] = "";
+    root["localtime"] = network->GetTime();
+    root["time"] = network->GetTimestamp();
 
 }
 

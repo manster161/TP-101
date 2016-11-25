@@ -104,10 +104,14 @@ const char* Network::GetNetwork(){
 }
 
 const char * Network::GetTime(){
-  return "Unknown";
+  char buffer[20];
+  sprintf(buffer, "%d:%d:%d", hour(), minute(), second());
+  return String(buffer).c_str();
 }
 
-
+int Network::GetTimestamp(){
+  return now();
+}
 
 void Network::UpdateTime(){
     Serial.println("Connecting to get curent  time");
