@@ -132,6 +132,14 @@ void Network::UpdateTime(){
   while(wifiClient->available()){
     String line = wifiClient->readStringUntil('\r');
     JsonObject& root = networkJsonBuffer.parseObject(line.c_str());
+    Serial.println("Timestamp:");
+    char buffer[25];
+    Serial.print("Timestamp: ");
+    sprintf(buffer, "%s", (const char*)root["timestamp"] );
+    Serial.println(buffer);
+    Serial.println("Formatted: ");
+    sprintf(buffer, "%s", (const char*)root["formatted"] );
+    Serial.println(buffer);
     setTime(root["timestamp"]);
     Serial.print(root.prettyPrintTo(line));
   }

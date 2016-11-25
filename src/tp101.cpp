@@ -9,9 +9,9 @@ Tp101::Tp101(Network* network){
   r1->Off();
   r2 = new Relay(RELAY2, "Heating");
   r2->Off();
-  r3 = new Relay(RELAY3, "Water");
+  r3 = new Relay(RELAY3, "Air");
   r3->Off();
-  r4 = new Relay(RELAY4, "Air");
+  r4 = new Relay(RELAY4, "Water");
   r4->Off();
   dht = new DHT(DHTPIN, DHTTYPE, 11);
   _moisturesensor = new MoistureSensor();
