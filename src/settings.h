@@ -7,14 +7,9 @@
 //tx  rx  gpio4 gpio5 A gpio16 gpio14 gpio12 gpio13
 
 #define RELAY4PIN 13
-#define RELAY3PIN 12 //Broken!!
+#define RELAY3PIN 12
 #define RELAY2PIN 14
 #define RELAY1PIN 16 //brun
 
-namespace Settings {
- int ConnectionTimeOut  = 10000;
- float MaxTemp = 27;
- float MinTemp = 20;
-}
-
+ 
 #endif

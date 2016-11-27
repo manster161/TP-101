@@ -5,6 +5,8 @@
 #include "network.h"
 #include <ArduinoJson.h>
 #include "moisturesensor.h"
+#include "timeservice.h"
+#include "settings.h"
 
 class Tp101{
 public:
@@ -27,6 +29,7 @@ private:
   DHT* dht;
   Network* network;
   MoistureSensor* _moisturesensor;
+  TimeService* timeservice;
   int foundNetworks = 0;
   float _humidity, _temperature, _moisture;
   float _maxTemp = 25;

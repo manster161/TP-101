@@ -1,13 +1,14 @@
 #include "network.h"
 #include <stdio.h>
-String webString;
-#include "config/secrets.h"
-#include "settings.h"
+
 #include <String.h>
-#include <ArduinoJson.h>
 
+String webString;
+String thingspeak = "api.thingspeak.com";
 
-StaticJsonBuffer<300> networkJsonBuffer;
+const char* ssid = "Alexanderplatz";
+int connectionTimeout = 5000;
+extern const char* global_thingSpeakApiKey;
 
  Network::Network(ESP8266WebServer* server){
   this->server = server;
@@ -20,8 +21,8 @@ bool Network::Init(){
   int foundNetworks = ScanNetworks();
   bool connected = false;
   for (int i = 0; i < foundNetworks; i++){
-    if (WiFi.SSID(i) == Secrets::ssid){
-      connected =  ConnectToNetwork(Secrets::ssid, Secrets::password, wifiMulti, httpClient);
+    if (WiFi.SSID(i) == ssid){
+      connected =  ConnectToNetwork(ssid, "snopp161", wifiMulti, httpClient);
     }
   }
   return connected;
@@ -37,7 +38,7 @@ bool Network::ConnectToNetwork(const char* ssid, const char* password,ESP8266WiF
 
   Serial.print("\n\r \n\rWorking to connect");
   int timer = 0;
-  while (wifiMulti->run() != WL_CONNECTED && timer < Settings::ConnectionTimeOut) {
+  while (wifiMulti->run() != WL_CONNECTED && timer < connectionTimeout) {
     delay(500);
     timer += 500;
     Serial.print(".");
@@ -56,6 +57,9 @@ bool Network::ConnectToNetwork(const char* ssid, const char* password,ESP8266WiF
 }
 
 
+WiFiClient* Network::GetWiFiClient(){
+  return this->wifiClient;
+}
 
 int Network::ScanNetworks(){
   WiFi.mode(WIFI_STA);
@@ -100,60 +104,7 @@ const char * Network::GetIp(){
 }
 
 const char* Network::GetNetwork(){
-  return Secrets::ssid;
-}
-
-const char * Network::GetTime(){
-  char buffer[20];
-  sprintf(buffer, "%d:%d:%d", hour(), minute(), second());
-  return String(buffer).c_str();
-}
-
-int Network::GetTimestamp(){
-  return now();
-}
-
-void Network::UpdateTime(){
-    Serial.println("Connecting to get curent  time");
-    if (wifiClient->connect(Secrets::timezonedb.c_str(), 80)){
-      Serial.println("Connected");
-      String s = "GET /v2/get-time-zone?key="
-      + Secrets::timezonedbApiKey + "&by=zone&format=json&zone=CET HTTP/1.1\r\nHost: "
-      + Secrets::timezonedb +"\r\nConnection: close\r\n\r\n";
-      wifiClient->println(s.c_str());
-
-      unsigned long timeout = millis();
-      while (wifiClient->available() == 0) {
-
-      if (millis() - timeout > 5000) {
-        Serial.println(">>> Client Timeout !");
-        wifiClient->stop();
-        return;
-      }
-    }
-
-  while(wifiClient->available()){
-    String line = wifiClient->readStringUntil('\r');
-    char ln[line.length() + 1];
-    sprintf(ln, "%s",line.c_str());
-    JsonObject& root = networkJsonBuffer.parseObject(ln);
-
-    if(root.success())
-      {
-
-        long ts = root["timestamp"].as<long>();
-        Serial.printf("Timestamp: %d\n", ts);
-        String formatted = root["formatted"].asString();
-
-        Serial.println(formatted);
-        setTime(ts);
-      }
-      else{
-        Serial.print("Line decoding failed for :");
-        Serial.println(line);
-      }
-    }
-  }
+  return ssid;
 }
 
 
@@ -162,7 +113,7 @@ void Network::UpdateThingspeak(float temp, float humidity){
 
   Serial.println("Connecting");
 
-  String postStr = Secrets::thingSpeakApiKey;
+  String postStr = String(global_thingSpeakApiKey);
   postStr +="&field1=";
   postStr += String(temp);
   postStr +="&field2=";
@@ -170,13 +121,13 @@ void Network::UpdateThingspeak(float temp, float humidity){
   postStr += String(humidity);
   postStr += "\r\n\r\n";
 
-    if (wifiClient->connect(Secrets::thingspeak.c_str(), 80)){
+    if (wifiClient->connect(thingspeak.c_str(), 80)){
 
       Serial.println("Connected");
       wifiClient->print("POST /update HTTP/1.1\n");
       wifiClient->print("Host: api.thingspeak.com\n");
       wifiClient->print("Connection: close\n");
-      wifiClient->print("X-THINGSPEAKAPIKEY: "+ String(Secrets::thingSpeakApiKey) + "\n");
+      wifiClient->print("X-THINGSPEAKAPIKEY: "+ String(global_thingSpeakApiKey) + "\n");
       wifiClient->print("Content-Type: application/x-www-form-urlencoded\n");
       wifiClient->print("Content-Length: ");
       wifiClient->print(postStr.length());

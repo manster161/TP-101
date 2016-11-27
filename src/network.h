@@ -5,7 +5,7 @@
 #include <ESP8266WiFiMulti.h>
 #include <ESP8266HTTPClient.h>
 #include <ESP8266WebServer.h>
-#include <Time.h>
+
 
 class Network {
 public:
@@ -16,11 +16,10 @@ public:
   void HandleRoot(void);
   bool SetupServer(void);
   void UpdateThingspeak(float temp, float humidity);
-  void UpdateTime();
-  const char* GetTime();
   const char* GetIp();
   const char* GetNetwork();
-  int GetTimestamp();
+  WiFiClient* GetWiFiClient();
+
 private:
   const char * IpToCharArray();
   void Post(String);

@@ -1,20 +1,24 @@
 #include "tp101.h"
-#include "pins.h"
+
 #include <ArduinoJson.h>
 
 StaticJsonBuffer<200> jsonBuffer;
+int minTemp = 20;
+int maxTemp = 25;
+extern char* global_thingSpeakApiKey;
 
 Tp101::Tp101(Network* network){
-  r1 = new Relay(RELAY1, "Lights");
+  r1 = new Relay(RELAY1PIN, "Lights");
   r1->Off();
-  r2 = new Relay(RELAY2, "Heating");
+  r2 = new Relay(RELAY2PIN, "Heating");
   r2->Off();
-  r3 = new Relay(RELAY3, "Air");
+  r3 = new Relay(RELAY3PIN, "Air");
   r3->Off();
-  r4 = new Relay(RELAY4, "Water");
+  r4 = new Relay(RELAY4PIN, "Water");
   r4->Off();
   dht = new DHT(DHTPIN, DHTTYPE, 11);
   _moisturesensor = new MoistureSensor();
+  timeservice = new TimeService(network->GetWiFiClient());
   this->network = network;
 }
 
@@ -22,7 +26,7 @@ void Tp101::Init(){
   network->Init();
   Serial.println("network initialization done");
   _moisturesensor->init();
-  this->network->UpdateTime();
+  timeservice->UpdateTime();
 }
 
 float Tp101::GetTemperature(){
@@ -52,8 +56,8 @@ const char* Tp101::GetStatus(){
     root["moisture"] = _moisture;
     root["ipaddress"] = network->GetIp();
     root["network"] = network->GetNetwork();
-    root["localtime"] = network->GetTime();
-    root["time"] = network->GetTimestamp();
+    root["localtime"] = timeservice->GetLocalTime();
+    root["time"] = timeservice->GetTimestamp();
 
 }
 

@@ -1,13 +1,15 @@
 #include <Arduino.h>
 #include <Adafruit_Sensor.h>
 #include <DHT.h>
-#include "pins.h"
 #include <ESP8266WebServer.h>
-#include "tp101.h"
-#include "network.h"
 #include <TickerScheduler.h>
+#include "tp101.h"
+
 
 #define STATISTICS_TIMER 10000
+
+
+extern char* global_timezoneDbApiKey;
 
 ESP8266WebServer server(80);
 DHT dht(DHTPIN, DHTTYPE, 11);
@@ -41,11 +43,13 @@ void updateStatistics(){
 
 void setup(void){
   Serial.begin(115200);
+
+
   Serial.println("Setup relays");
-  pinMode(RELAY1, OUTPUT);
-  pinMode(RELAY2, OUTPUT);
-  pinMode(RELAY3, OUTPUT);
-  pinMode(RELAY4, OUTPUT);
+  pinMode(RELAY1PIN, OUTPUT);
+  pinMode(RELAY2PIN, OUTPUT);
+  pinMode(RELAY3PIN, OUTPUT);
+  pinMode(RELAY4PIN, OUTPUT);
   Serial.println("Create network");
   Network* network = new Network(&server);
 Serial.println("Create TP");
