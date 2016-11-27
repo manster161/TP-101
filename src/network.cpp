@@ -7,7 +7,7 @@ String webString;
 #include <ArduinoJson.h>
 
 
-StaticJsonBuffer<200> networkJsonBuffer;
+StaticJsonBuffer<300> networkJsonBuffer;
 
  Network::Network(ESP8266WebServer* server){
   this->server = server;
@@ -132,23 +132,31 @@ void Network::UpdateTime(){
       }
     }
 
-    // Read all the lines of the reply from server and print them to Serial
   while(wifiClient->available()){
     String line = wifiClient->readStringUntil('\r');
-    JsonObject& root = networkJsonBuffer.parseObject(line.c_str());
-    Serial.println("Timestamp:");
-    char buffer[25];
-    Serial.print("Timestamp: ");
-    sprintf(buffer, "%s", (const char*)root["timestamp"] );
-    Serial.println(buffer);
-    Serial.println("Formatted: ");
-    sprintf(buffer, "%s", (const char*)root["formatted"] );
-    Serial.println(buffer);
-    setTime(root["timestamp"]);
-    Serial.print(root.prettyPrintTo(line));
+    char ln[line.length() + 1];
+    sprintf(ln, "%s",line.c_str());
+    JsonObject& root = networkJsonBuffer.parseObject(ln);
+
+    if(root.success())
+      {
+
+        long ts = root["timestamp"].as<long>();
+        Serial.printf("Timestamp: %d\n", ts);
+        String formatted = root["formatted"].asString();
+
+        Serial.println(formatted);
+        setTime(ts);
+      }
+      else{
+        Serial.print("Line decoding failed for :");
+        Serial.println(line);
+      }
+    }
   }
 }
-}
+
+
 
 void Network::UpdateThingspeak(float temp, float humidity){
 
@@ -158,6 +166,7 @@ void Network::UpdateThingspeak(float temp, float humidity){
   postStr +="&field1=";
   postStr += String(temp);
   postStr +="&field2=";
+
   postStr += String(humidity);
   postStr += "\r\n\r\n";
 
