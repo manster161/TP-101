@@ -2,7 +2,12 @@
 
 #include <ArduinoJson.h>
 
-StaticJsonBuffer<200> jsonBuffer;
+StaticJsonBuffer<256> jsonBuffer;
+JsonArray& root = jsonBuffer.createArray();
+JsonObject& sensors = root.createNestedObject().createNestedObject("network");
+JsonObject& readings = root.createNestedObject().createNestedObject("readings");
+JsonObject& timeObj = root.createNestedObject().createNestedObject("time");
+char localTimeBuffer[20];
 int minTemp = 20;
 int maxTemp = 25;
 extern char* global_thingSpeakApiKey;
@@ -48,17 +53,28 @@ void Tp101::Handle(){
   }
 }
 
-const char* Tp101::GetStatus(){
-    JsonObject& root = jsonBuffer.createObject();
+ char* Tp101::GetStatus(char* buffer, size_t bufferSize){
 
-    root["temp"] = _temperature;
-    root["humidity"] = _humidity;
-    root["moisture"] = _moisture;
-    root["ipaddress"] = network->GetIp();
-    root["network"] = network->GetNetwork();
-    root["localtime"] = timeservice->GetLocalTime();
-    root["time"] = timeservice->GetTimestamp();
 
+    //JsonArray& root = jsonBuffer.createArray();
+    //JsonObject& sensors = root.createNestedObject().createNestedObject("network");
+    sensors["ipaddress"] = network->GetIp();
+    sensors["network"] = network->GetNetwork();
+
+    //JsonObject& readings = root.createNestedObject().createNestedObject("readings");
+    readings["temp"] = _temperature;
+    readings["humidity"] = _humidity;
+    readings["moisture"] = _moisture;
+
+
+    //JsonObject& timeObj = root.createNestedObject().createNestedObject("time");
+
+    timeObj["localtime"] = timeservice->GetLocalTime(localTimeBuffer, 19);
+    timeObj["time"] = timeservice->GetTimestamp();
+
+    root.prettyPrintTo(Serial);
+    root.printTo(buffer, bufferSize);
+    return buffer;
 }
 
 void Tp101::UpdateStatistics(){
@@ -73,6 +89,7 @@ void Tp101::UpdateStatistics(){
 
   _moisture = _moisturesensor->read();
 
+/*
     Serial.println("TP update statistics");
     Serial.println("Temperature: " + String((int)_temperature) );
     Serial.println("Humidity: " + String((int)_humidity) );
@@ -82,7 +99,7 @@ void Tp101::UpdateStatistics(){
     Serial.println(r2->GetStatus());
     Serial.println(r3->GetStatus());
     Serial.println(r4->GetStatus());
-
+*/
 
     unsigned long currentMillis = millis();
     unsigned long elapsedTime = currentMillis - _previousMillis;

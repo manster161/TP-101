@@ -13,8 +13,9 @@ public:
    ~TimeService();
 
    void UpdateTime();
-   const char*  GetLocalTime();
+   char*  GetLocalTime(char*, int);
    long GetTimestamp();
+
 private:
 
   WiFiClient* client;

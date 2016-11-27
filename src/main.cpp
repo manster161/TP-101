@@ -10,6 +10,7 @@
 
 
 extern char* global_timezoneDbApiKey;
+char buffer[256];
 
 ESP8266WebServer server(80);
 DHT dht(DHTPIN, DHTTYPE, 11);
@@ -23,7 +24,7 @@ void HandleRoot() {
 }
 
 void Statistics() {
-  server.send(200, "application/json", tp101->GetStatus());
+  server.send(200, "application/json", tp101->GetStatus(buffer, 256));
 }
 
 bool SetupServer(){
@@ -37,6 +38,7 @@ bool SetupServer(){
 void updateStatistics(){
   Serial.println("UpdateStatistics");
   tp101->UpdateStatistics();
+  Serial.println(tp101->GetStatus(buffer, 256));
   tp101->Handle();
 }
 

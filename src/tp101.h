@@ -17,7 +17,7 @@ public:
   void Handle();
   float GetTemperature();
   float GetHumidity();
-  const char* GetStatus();
+  char* GetStatus(char* buffer, size_t bufferSize);
   const char* GetNetwork();
 
 private:

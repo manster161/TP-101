@@ -5,7 +5,7 @@
 #include <ESP8266WiFiMulti.h>
 #include <ESP8266HTTPClient.h>
 #include <ESP8266WebServer.h>
-
+#include <Arduino.h>
 
 class Network {
 public:
@@ -16,7 +16,7 @@ public:
   void HandleRoot(void);
   bool SetupServer(void);
   void UpdateThingspeak(float temp, float humidity);
-  const char* GetIp();
+  String  GetIp();
   const char* GetNetwork();
   WiFiClient* GetWiFiClient();
 

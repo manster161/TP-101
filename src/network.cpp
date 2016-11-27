@@ -99,8 +99,8 @@ const char * Network::IpToCharArray(){
     return str.c_str();
 }
 
-const char * Network::GetIp(){
-  return IpToCharArray();
+String Network::GetIp(){
+  return WiFi.localIP().toString();
 }
 
 const char* Network::GetNetwork(){
