@@ -19,7 +19,7 @@ Tp101* tp101;
 
 
 void HandleRoot() {
-  server.send(200, "text/plain", "Hello from TP-101.\nRead the statistcs at /statistics");
+  server.send(200, "text/plain", "Hello from TP-101.\nRead the statistcs at /stat");
   delay(100);
 }
 
@@ -29,7 +29,7 @@ void Statistics() {
 
 bool SetupServer(){
   server.on("/", HandleRoot);
-  server.on("/statistcs", Statistics);
+  server.on("/stat", Statistics);
   server.begin();
   Serial.println("HTTP server started");
 
@@ -38,7 +38,6 @@ bool SetupServer(){
 void updateStatistics(){
   Serial.println("UpdateStatistics");
   tp101->UpdateStatistics();
-  Serial.println(tp101->GetStatus(buffer, 256));
   tp101->Handle();
 }
 
@@ -54,11 +53,14 @@ void setup(void){
   pinMode(RELAY4PIN, OUTPUT);
   Serial.println("Create network");
   Network* network = new Network(&server);
-Serial.println("Create TP");
+  Serial.println("Create TP");
   tp101 = new Tp101(network);
   Serial.println("Init TP");
   tp101->Init();
+  Serial.println("Starting webserver");
+  SetupServer();
   Serial.println("Setup done");
+
   scheduler.add(0, STATISTICS_TIMER,updateStatistics);
 }
 

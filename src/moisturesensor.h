@@ -8,9 +8,9 @@ class MoistureSensor  {
 public:
   MoistureSensor();
   ~MoistureSensor();
-   bool init(void);
-   float read(void);
-  float GetMoistureLevel();
+  void UpdateCalibrationValues();
+  int Read(void);
+
 private:
 
 };

@@ -109,7 +109,7 @@ const char* Network::GetNetwork(){
 
 
 
-void Network::UpdateThingspeak(float temp, float humidity){
+void Network::UpdateThingspeak(int temp, int humidity, int heating, int lights, int water){
 
   Serial.println("Connecting");
 
@@ -117,8 +117,13 @@ void Network::UpdateThingspeak(float temp, float humidity){
   postStr +="&field1=";
   postStr += String(temp);
   postStr +="&field2=";
-
   postStr += String(humidity);
+  postStr +="&field3=";
+  postStr += String(heating);
+  postStr +="&field4=";
+  postStr += String(lights);
+  postStr +="&field5=";
+  postStr += String(water);
   postStr += "\r\n\r\n";
 
     if (wifiClient->connect(thingspeak.c_str(), 80)){

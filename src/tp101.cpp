@@ -10,6 +10,9 @@ JsonObject& timeObj = root.createNestedObject().createNestedObject("time");
 char localTimeBuffer[20];
 int minTemp = 20;
 int maxTemp = 25;
+int lightsOn = 7;
+int lightsOff = 23;
+
 extern char* global_thingSpeakApiKey;
 
 Tp101::Tp101(Network* network){
@@ -30,7 +33,7 @@ Tp101::Tp101(Network* network){
 void Tp101::Init(){
   network->Init();
   Serial.println("network initialization done");
-  _moisturesensor->init();
+
   timeservice->UpdateTime();
 }
 
@@ -50,6 +53,25 @@ void Tp101::Handle(){
   if (_temperature > _maxTemp && r2->IsOn()){
     Serial.println("Its hot again, turning off heater");
     r2->Off();
+  }
+
+  if (timeservice->GetCurrentHour() > lightsOn &&  timeservice->GetCurrentHour() <= lightsOff && !r1->IsOn()){
+      Serial.println("Its day now, letting the sun come out");
+    r1->On();
+  } else if (timeservice->GetCurrentHour() < lightsOn &&  timeservice->GetCurrentHour() > lightsOff && r1->IsOn()){
+    Serial.println("Its night again, see you tomorrow");
+    r1->Off();
+  }
+
+  int moistureLevel = _moisturesensor->Read();
+  if (moistureLevel < 30 && !r4->IsOn()){
+    Serial.println("Earth is dry. Letting the rain fall");
+    r4->On();
+  }
+
+  if (moistureLevel > 70 && r4->IsOn()){
+    Serial.println("Earth is nice and moist again. Stopping rainfall");
+    r4->Off();
   }
 }
 
@@ -86,27 +108,28 @@ void Tp101::UpdateStatistics(){
   float temp =  dht->readTemperature(false);     // Read humidity (percent)
   if (temp >= 0 && temp <= 100)
     _temperature = temp;
-
-  _moisture = _moisturesensor->read();
-
-/*
-    Serial.println("TP update statistics");
-    Serial.println("Temperature: " + String((int)_temperature) );
-    Serial.println("Humidity: " + String((int)_humidity) );
-    Serial.println("Moisture: " + String((int)_moisture) );
-
-    Serial.println(r1->GetStatus());
-    Serial.println(r2->GetStatus());
-    Serial.println(r3->GetStatus());
-    Serial.println(r4->GetStatus());
-*/
+  _moisture = _moisturesensor->Read();
 
     unsigned long currentMillis = millis();
     unsigned long elapsedTime = currentMillis - _previousMillis;
     if(elapsedTime  >= _postInterval) {
       // save the last time you read the sensor
       _previousMillis = currentMillis;
-      network->UpdateThingspeak(_temperature, _humidity);
+      int heating = 0;
+      int lights = 0;
+      int water = 0;
+
+      if (r1->IsOn()){
+        lights = 1;
+      }
+      if (r2->IsOn()){
+        heating = 1;
+      }
+      if (r4->IsOn()){
+        water = 1;
+      }
+
+      network->UpdateThingspeak(_temperature, _humidity, heating, lights, water);
   }
   else{
     int secondsTillUpdate = (int) (_postInterval - elapsedTime)/1000;

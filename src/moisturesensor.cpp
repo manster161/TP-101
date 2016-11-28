@@ -1,24 +1,36 @@
   #include "moisturesensor.h"
 
+  static unsigned int maxValue;
+  static unsigned int minValue;
 
   MoistureSensor::MoistureSensor(){
-
+    pinMode(A0, INPUT);
+    maxValue = 1023;
+    minValue = 0;
   }
   MoistureSensor::~MoistureSensor(){
 
   }
 
+void MoistureSensor::UpdateCalibrationValues() {
+  unsigned int currentValue = analogRead(A0);
+  if (currentValue > maxValue){
+    maxValue = currentValue;
+  }
+  if (currentValue < minValue){
+    minValue = currentValue;
+  }
+}
 
-  float MoistureSensor::read(){
+  int MoistureSensor::Read(){
+    unsigned int val = analogRead(A0);
+    val = constrain(val, 650, 1023);
+  	int soil = map(val, 650, 1023, 100, 0);
 
-    return 0;
+    Serial.print("Moisture:");
+    Serial.println(soil);
+    return soil;
   }
 
- bool MoistureSensor::init(){
-   pinMode(A0, INPUT);
-   return true;
- }
 
-  float MoistureSensor::GetMoistureLevel(){
-      return 0;
-  }
+  

@@ -15,7 +15,8 @@ public:
    void UpdateTime();
    char*  GetLocalTime(char*, int);
    long GetTimestamp();
-
+   int GetCurrentHour();
+   int GetCurrentMinute();
 private:
 
   WiFiClient* client;

@@ -22,6 +22,12 @@ long TimeService::GetTimestamp(){
   return now();
 }
 
+int TimeService::GetCurrentHour(){
+  return hour(now());
+}
+int TimeService::GetCurrentMinute(){
+    return hour(minute());
+}
 void TimeService::UpdateTime(){
     Serial.println("Connecting to get curent time");
     if (client->connect(timezonedb.c_str(), 80)){
@@ -58,7 +64,7 @@ void TimeService::UpdateTime(){
         break;
       }
       else{
-        Serial.println(line);
+        //Serial.println(line);
       }
     }
   }

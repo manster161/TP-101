@@ -15,7 +15,7 @@ public:
   bool ConnectToNetwork(const char*, const char*,ESP8266WiFiMulti*, HTTPClient*);
   void HandleRoot(void);
   bool SetupServer(void);
-  void UpdateThingspeak(float temp, float humidity);
+  void UpdateThingspeak(int temp, int humidity, int heating, int lights, int water);
   String  GetIp();
   const char* GetNetwork();
   WiFiClient* GetWiFiClient();
