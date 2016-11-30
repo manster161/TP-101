@@ -6,8 +6,8 @@
 #include "tp101.h"
 
 
-#define STATISTICS_TIMER 10000
-#define PID_TIMER 1000
+#define STATISTICS_TIMER 1000
+#define PID_TIMER 5000
 
 extern char* global_timezoneDbApiKey;
 char buffer[256];
@@ -40,9 +40,6 @@ void updateStatistics(){
   Serial.println("UpdateStatistics");
   tp101->UpdateStatistics();
   tp101->Handle();
-}
-
-void updatePID(/* arguments */) {
   tp101->HandlePID();
 }
 
@@ -65,11 +62,10 @@ void setup(void){
   Serial.println("Setup done");
 
   scheduler.add(0, STATISTICS_TIMER,updateStatistics);
-  pidScheduler.add(0, PID_TIMER, updatePID);
+
 }
 
 void loop(void){
   scheduler.update();
-  pidScheduler.update();
   server.handleClient();
 }

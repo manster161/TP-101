@@ -13,12 +13,12 @@ int minTemp = 20;
 int maxTemp = 25;
 int lightsOn = 7;
 int lightsOff = 23;
-int windowSize;
-long windowStartTime = 5000;
+int windowSize = 5000;
+long windowStartTime;
 extern char* global_thingSpeakApiKey;
 
-double heaterSetpoint, heaterInput, heaterOuput;
-PID heaterPID(&heaterInput, &heaterOuput, &heaterSetpoint, 2,5,1, DIRECT);
+double heaterSetpoint, _temperature, heaterOuput;
+PID heaterPID(&_temperature, &heaterOuput, &heaterSetpoint, 2,5,1, DIRECT);
 
 Tp101::Tp101(Network* network){
   r1 = new Relay(RELAY1PIN, "Lights");
@@ -57,36 +57,40 @@ float Tp101::GetHumidity(){
 }
 
 void Tp101::HandlePID(){
-  float temp =  dht->readTemperature(false);     // Read humidity (percent)
-  if (temp >= 0 && temp <= 100)
-    _temperature = temp;
-
     heaterPID.Compute();
 
   /************************************************
   * turn the output pin on/off based on pid output
   ************************************************/
  unsigned long now = millis();
- if(now - windowStartTime>windowSize)
+
+ if(now - windowStartTime > windowSize)
  { //time to shift the Relay Window
    windowStartTime += windowSize;
  }
+ Serial.printf("%d - %d = %d > %d\n",now, windowStartTime, now - windowStartTime,  windowSize);
+ Serial.printf("heaterOutput:%d, now: %d, windowStartTime: %d\n",heaterOuput, now, windowStartTime );
  if(heaterOuput > now - windowStartTime){
+   if (!r2->IsOn()){
+     Serial.println("Switching on heating");
+   }
    r2->On();
- }else {
+ }
+ else {
+   if (r2->IsOn()){
+     Serial.println("Switching off heating");
+   }
    r2->Off();
  }
-
-
-
 }
+
 void Tp101::Handle(){
 
-
-  if (timeservice->GetCurrentHour() > lightsOn &&  timeservice->GetCurrentHour() <= lightsOff && !r1->IsOn()){
+  if (timeservice->GetCurrentHour() >= lightsOn &&  timeservice->GetCurrentHour() < lightsOff){
       Serial.println("Its day now, letting the sun come out");
     r1->On();
-  } else if (timeservice->GetCurrentHour() < lightsOn &&  timeservice->GetCurrentHour() > lightsOff && r1->IsOn()){
+  } else if (timeservice->GetCurrentHour() < lightsOn &&  timeservice->GetCurrentHour() >=
+   lightsOff){
     Serial.println("Its night again, see you tomorrow");
     r1->Off();
   }
@@ -105,7 +109,6 @@ void Tp101::Handle(){
 
  char* Tp101::GetStatus(char* buffer, size_t bufferSize){
 
-
     //JsonArray& root = jsonBuffer.createArray();
     //JsonObject& sensors = root.createNestedObject().createNestedObject("network");
     sensors["ipaddress"] = network->GetIp();
@@ -115,7 +118,6 @@ void Tp101::Handle(){
     readings["temp"] = _temperature;
     readings["humidity"] = _humidity;
     readings["moisture"] = _moisture;
-
 
     //JsonObject& timeObj = root.createNestedObject().createNestedObject("time");
 
@@ -133,8 +135,11 @@ void Tp101::UpdateStatistics(){
   if (hum >= 0 && hum <= 100)
     _humidity = hum;
 
-
   _moisture = _moisturesensor->Read();
+
+  float temp =  dht->readTemperature(false);     // Read humidity (percent)
+  if (temp >= 0 && temp <= 100)
+    _temperature = temp;
 
     unsigned long currentMillis = millis();
     unsigned long elapsedTime = currentMillis - _previousMillis;
