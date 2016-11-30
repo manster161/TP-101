@@ -1,5 +1,5 @@
 #include "tp101.h"
-
+#include <PID_v1.h>
 #include <ArduinoJson.h>
 
 StaticJsonBuffer<256> jsonBuffer;
@@ -7,13 +7,18 @@ JsonArray& root = jsonBuffer.createArray();
 JsonObject& sensors = root.createNestedObject().createNestedObject("network");
 JsonObject& readings = root.createNestedObject().createNestedObject("readings");
 JsonObject& timeObj = root.createNestedObject().createNestedObject("time");
+
 char localTimeBuffer[20];
 int minTemp = 20;
 int maxTemp = 25;
 int lightsOn = 7;
 int lightsOff = 23;
-
+int windowSize;
+long windowStartTime = 5000;
 extern char* global_thingSpeakApiKey;
+
+double heaterSetpoint, heaterInput, heaterOuput;
+PID heaterPID(&heaterInput, &heaterOuput, &heaterSetpoint, 2,5,1, DIRECT);
 
 Tp101::Tp101(Network* network){
   r1 = new Relay(RELAY1PIN, "Lights");
@@ -35,6 +40,12 @@ void Tp101::Init(){
   Serial.println("network initialization done");
 
   timeservice->UpdateTime();
+
+  windowStartTime= millis();
+
+  heaterSetpoint = 24;
+  heaterPID.SetOutputLimits(0, 5000);
+  heaterPID.SetMode(AUTOMATIC);
 }
 
 float Tp101::GetTemperature(){
@@ -45,15 +56,32 @@ float Tp101::GetHumidity(){
   return _humidity;
 }
 
+void Tp101::HandlePID(){
+  float temp =  dht->readTemperature(false);     // Read humidity (percent)
+  if (temp >= 0 && temp <= 100)
+    _temperature = temp;
+
+    heaterPID.Compute();
+
+  /************************************************
+  * turn the output pin on/off based on pid output
+  ************************************************/
+ unsigned long now = millis();
+ if(now - windowStartTime>windowSize)
+ { //time to shift the Relay Window
+   windowStartTime += windowSize;
+ }
+ if(heaterOuput > now - windowStartTime){
+   r2->On();
+ }else {
+   r2->Off();
+ }
+
+
+
+}
 void Tp101::Handle(){
-  if (_temperature < _minTemp && !r2->IsOn()){
-    Serial.println("Its to coold, turning on heater");
-    r2->On();
-  }
-  if (_temperature > _maxTemp && r2->IsOn()){
-    Serial.println("Its hot again, turning off heater");
-    r2->Off();
-  }
+
 
   if (timeservice->GetCurrentHour() > lightsOn &&  timeservice->GetCurrentHour() <= lightsOff && !r1->IsOn()){
       Serial.println("Its day now, letting the sun come out");
@@ -100,14 +128,12 @@ void Tp101::Handle(){
 }
 
 void Tp101::UpdateStatistics(){
-  float hum = dht->readHumidity();
+  int hum = dht->readHumidity();
 
   if (hum >= 0 && hum <= 100)
     _humidity = hum;
 
-  float temp =  dht->readTemperature(false);     // Read humidity (percent)
-  if (temp >= 0 && temp <= 100)
-    _temperature = temp;
+
   _moisture = _moisturesensor->Read();
 
     unsigned long currentMillis = millis();

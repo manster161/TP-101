@@ -7,7 +7,7 @@
 
 
 #define STATISTICS_TIMER 10000
-
+#define PID_TIMER 1000
 
 extern char* global_timezoneDbApiKey;
 char buffer[256];
@@ -15,6 +15,7 @@ char buffer[256];
 ESP8266WebServer server(80);
 DHT dht(DHTPIN, DHTTYPE, 11);
 TickerScheduler scheduler(1);
+TickerScheduler pidScheduler(2);
 Tp101* tp101;
 
 
@@ -41,11 +42,13 @@ void updateStatistics(){
   tp101->Handle();
 }
 
+void updatePID(/* arguments */) {
+  tp101->HandlePID();
+}
+
 
 void setup(void){
   Serial.begin(115200);
-
-
   Serial.println("Setup relays");
   pinMode(RELAY1PIN, OUTPUT);
   pinMode(RELAY2PIN, OUTPUT);
@@ -62,9 +65,11 @@ void setup(void){
   Serial.println("Setup done");
 
   scheduler.add(0, STATISTICS_TIMER,updateStatistics);
+  pidScheduler.add(0, PID_TIMER, updatePID);
 }
 
 void loop(void){
   scheduler.update();
+  pidScheduler.update();
   server.handleClient();
 }
