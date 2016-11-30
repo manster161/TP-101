@@ -6,8 +6,8 @@
 #include "tp101.h"
 
 
-#define STATISTICS_TIMER 10000
-
+#define STATISTICS_TIMER 1000
+#define PID_TIMER 5000
 
 extern char* global_timezoneDbApiKey;
 char buffer[256];
@@ -15,6 +15,7 @@ char buffer[256];
 ESP8266WebServer server(80);
 DHT dht(DHTPIN, DHTTYPE, 11);
 TickerScheduler scheduler(1);
+TickerScheduler pidScheduler(2);
 Tp101* tp101;
 
 
@@ -39,13 +40,12 @@ void updateStatistics(){
   Serial.println("UpdateStatistics");
   tp101->UpdateStatistics();
   tp101->Handle();
+  tp101->HandlePID();
 }
 
 
 void setup(void){
   Serial.begin(115200);
-
-
   Serial.println("Setup relays");
   pinMode(RELAY1PIN, OUTPUT);
   pinMode(RELAY2PIN, OUTPUT);
@@ -62,6 +62,7 @@ void setup(void){
   Serial.println("Setup done");
 
   scheduler.add(0, STATISTICS_TIMER,updateStatistics);
+
 }
 
 void loop(void){
