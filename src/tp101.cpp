@@ -129,7 +129,7 @@ void Tp101::UpdateStatistics(){
         water = 1;
       }
 
-      network->UpdateThingspeak(_temperature, _humidity, heating, lights, water);
+      network->UpdateThingspeak(_temperature, _humidity, _moisture,  heating, lights, water);
   }
   else{
     int secondsTillUpdate = (int) (_postInterval - elapsedTime)/1000;

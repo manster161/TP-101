@@ -109,7 +109,7 @@ const char* Network::GetNetwork(){
 
 
 
-void Network::UpdateThingspeak(int temp, int humidity, int heating, int lights, int water){
+void Network::UpdateThingspeak(int temp, int humidity, int moisture, int heating, int lights, int water){
 
   Serial.println("Connecting");
 
@@ -119,10 +119,12 @@ void Network::UpdateThingspeak(int temp, int humidity, int heating, int lights, 
   postStr +="&field2=";
   postStr += String(humidity);
   postStr +="&field3=";
-  postStr += String(heating);
+  postStr += String(moisture);
   postStr +="&field4=";
-  postStr += String(lights);
+  postStr += String(heating);
   postStr +="&field5=";
+  postStr += String(lights);
+  postStr +="&field6=";
   postStr += String(water);
   postStr += "\r\n\r\n";
 
