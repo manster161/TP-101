@@ -2,6 +2,7 @@
 #include "relay.h"
 
 
+long startMillis, totalRunningTime;
 
   Relay::Relay(char pin, const char* name){
     //Check if pin is valid
@@ -13,16 +14,23 @@
     digitalWrite(_pin, LOW);
   }
 
+ long Relay::OpenTimeSinceReset(){
+    return totalRunningTime;
+  }
+
   void Relay::On(){
-    if (_isOn)
-      return;
+
+    if (!_isOn)
+      startMillis = millis();
+
     digitalWrite(_pin, HIGH);
     _isOn = true;
   }
 
   void Relay::Off(){
-    if (!_isOn)
-      return;
+    if (_isOn)
+      totalRunningTime += millis() - startMillis;
+
     digitalWrite(_pin, LOW);
     _isOn = false;
   }

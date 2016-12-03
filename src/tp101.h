@@ -17,6 +17,8 @@ public:
   void HandlePID();
   void Handle();
   float GetTemperature();
+  void ControlHeater();
+  void ControlMoisture();
   float GetHumidity();
   char* GetStatus(char* buffer, size_t bufferSize);
   const char* GetNetwork();

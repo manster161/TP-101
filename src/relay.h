@@ -9,6 +9,7 @@ public:
   void Off(void);
   bool IsOn(void);
   char*  GetStatus();
+  long OpenTimeSinceReset();
 private:
   char _pin = 0;
   bool _isOn = false;
