@@ -2,7 +2,7 @@
 #include <PID_v1.h>
 #include <ArduinoJson.h>
 
-StaticJsonBuffer<2048> jsonBuffer;
+StaticJsonBuffer<4096> jsonBuffer;
 JsonArray& root = jsonBuffer.createArray();
 JsonObject& sensors = root.createNestedObject().createNestedObject("network");
 JsonObject& readings = root.createNestedObject().createNestedObject("readings");
@@ -27,19 +27,25 @@ extern char* global_thingSpeakApiKey;
 
 double heaterSetpoint, _temperature, heaterOuput;
 double moistureSetpoint, _moisture, moistureOuput;
+
 PID heaterPID(&_temperature, &heaterOuput, &heaterSetpoint, consKp,consKi,consKd, DIRECT);
 PID moisturePID(&_moisture, &moistureOuput, &moistureSetpoint, consKp,consKi,consKd, DIRECT);
+Relay LigthRelay(13, "Lights");
+Relay HeaterRelay(12, "Heating");
+Relay VentilationRelay(14, "Ventilation");
+Relay WaterRelay(16, "Water");
+DHT dht(DHTPIN, DHTTYPE, 11);
 
 Tp101::Tp101(Network* network){
-  r1 = new Relay(RELAY1PIN, "Lights");
-  r1->Off();
-  r2 = new Relay(RELAY2PIN, "Heating");
-  r2->Off();
-  r3 = new Relay(RELAY3PIN, "Air");
-  r3->Off();
-  r4 = new Relay(RELAY4PIN, "Water");
-  r4->Off();
-  dht = new DHT(DHTPIN, DHTTYPE, 11);
+
+  LigthRelay.Off();
+
+  HeaterRelay.Off();
+
+  VentilationRelay.Off();
+
+  WaterRelay.Off();
+
   _moisturesensor = new MoistureSensor();
   timeservice = new TimeService(network->GetWiFiClient());
   this->network = network;
@@ -95,16 +101,16 @@ void Tp101::ControlHeater(){
 //  Serial.printf("%d - %d = %d > %d\n",now, windowStartTime, now - windowStartTime,  windowSize);
 //  Serial.printf("heaterOutput:%d, now: %d, windowStartTime: %d\n",heaterOuput, now, windowStartTime );
   if(heaterOuput > now - windowStartTime){
-    if (!r2->IsOn()){
+    if (!HeaterRelay.IsOn()){
       Serial.println("Switching on heating");
     }
-    r2->On();
+    HeaterRelay.On();
   }
   else {
-    if (r2->IsOn()){
+    if (HeaterRelay.IsOn()){
       Serial.println("Switching off heating");
     }
-    r2->Off();
+    HeaterRelay.Off();
 }
 }
 
@@ -131,16 +137,16 @@ void Tp101::ControlMoisture(){
   }
 
   if(moistureOuput > now - moistureWindowStartTime){
-    if (!r4->IsOn()){
+    if (!WaterRelay.IsOn()){
       Serial.println("Let it rain!");
     }
-    r4->On();
+    WaterRelay.On();
   }
   else {
-    if (r4->IsOn()){
+    if (WaterRelay.IsOn()){
       Serial.println("Sun is shining, the Weather is sweat");
     }
-    r4->Off();
+    WaterRelay.Off();
 }
 }
 
@@ -158,15 +164,15 @@ void Tp101::Handle(){
 Serial.printf("CurrentHour %d : lightsOn: %d lightsOff: %d\n", currentHour, lightsOn, lightsOff );
   if (currentHour >= lightsOn && currentHour <= lightsOff)
   {
-    if (!r1->IsOn()){
+    if (!LigthRelay.IsOn()){
         Serial.println("Its day now, letting the sun come out");
     }
-    r1->On();
+    LigthRelay.On();
   } else {
-    if (r1->IsOn()){
+    if (LigthRelay.IsOn()){
         Serial.println("Its night again, see you tomorrow");
     }
-    r1->Off();
+    LigthRelay.Off();
   }
 }
 
@@ -182,28 +188,28 @@ Serial.printf("CurrentHour %d : lightsOn: %d lightsOff: %d\n", currentHour, ligh
     readings["humidity"] = _humidity;
     readings["moisture"] = _moisture;
 
-    if (r1->IsOn())
+    if (LigthRelay.IsOn())
       readings["lamp"] = "on";
     else
       readings["lamp"] = "off";
 
-      readings["lampRunningTime"] = String(r1->OpenTimeSinceReset());
+      readings["lampRunningTime"] = String(LigthRelay.OpenTimeSinceReset());
 
-      if (r2->IsOn())
+      if (HeaterRelay.IsOn())
         readings["heating"] = "on";
       else
         readings["heating"] = "off";
 
-      readings["heatingRunningTime"] = String(r2->OpenTimeSinceReset());
+      readings["heatingRunningTime"] = String(HeaterRelay.OpenTimeSinceReset());
 
 
 
-      if (r4->IsOn())
+      if (WaterRelay.IsOn())
         readings["pump"] = "on";
       else
         readings["pump"] = "off";
 
-        readings["pumpRunningTime"] = String(r4->OpenTimeSinceReset());
+        readings["pumpRunningTime"] = String(WaterRelay.OpenTimeSinceReset());
 
     //JsonObject& timeObj = root.createNestedObject().createNestedObject("time");
 
@@ -217,14 +223,14 @@ Serial.printf("CurrentHour %d : lightsOn: %d lightsOff: %d\n", currentHour, ligh
 }
 
 void Tp101::UpdateStatistics(){
-  int hum = dht->readHumidity();
+  int hum = dht.readHumidity();
 
   if (hum >= 0 && hum <= 100)
     _humidity = hum;
 
   _moisture = _moisturesensor->Read();
 
-  float temp =  dht->readTemperature(false);     // Read humidity (percent)
+  float temp =  dht.readTemperature(false);     // Read humidity (percent)
 
   if (temp >= 0 && temp <= 100)
     _temperature = temp;
@@ -238,19 +244,19 @@ void Tp101::UpdateStatistics(){
       int lights = 0;
       int water = 0;
 
-      if (r1->IsOn()){
+      if (LigthRelay.IsOn()){
         lights = 1;
       }
       else
         lights = 0;
 
-      if (r2->IsOn()){
+      if (HeaterRelay.IsOn()){
         heating = 1;
       }
       else
         heating = 0;
 
-      if (r4->IsOn()){
+      if (WaterRelay.IsOn()){
         water = 1;
       }
       else water = 0;

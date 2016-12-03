@@ -24,12 +24,7 @@ public:
   const char* GetNetwork();
 
 private:
-  StaticJsonBuffer<200> jsonBuffer;
-  Relay* r1;
-  Relay* r2;
-  Relay* r3;
-  Relay* r4;
-  DHT* dht;
+  
   Network* network;
   MoistureSensor* _moisturesensor;
   TimeService* timeservice;

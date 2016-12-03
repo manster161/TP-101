@@ -4,7 +4,7 @@
 class Relay{
 public:
   Relay(char pin, const char*);
-  ~Relay();
+
   void On(void);
   void Off(void);
   bool IsOn(void);

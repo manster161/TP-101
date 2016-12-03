@@ -13,7 +13,8 @@ extern char* global_timezoneDbApiKey;
 char buffer[256];
 
 ESP8266WebServer server(80);
-DHT dht(DHTPIN, DHTTYPE, 11);
+Network* network = new Network(&server);
+
 TickerScheduler scheduler(1);
 TickerScheduler pidScheduler(2);
 Tp101* tp101;
