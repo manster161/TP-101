@@ -2,7 +2,7 @@
 #include <PID_v1.h>
 #include <ArduinoJson.h>
 
-StaticJsonBuffer<256> jsonBuffer;
+StaticJsonBuffer<2048> jsonBuffer;
 JsonArray& root = jsonBuffer.createArray();
 JsonObject& sensors = root.createNestedObject().createNestedObject("network");
 JsonObject& readings = root.createNestedObject().createNestedObject("readings");
@@ -74,14 +74,14 @@ float Tp101::GetHumidity(){
 
 void Tp101::ControlHeater(){
 
-  double gap = abs(moistureSetpoint - _moisture);
+  double gap = abs(heaterSetpoint - _temperature);
 
   if (gap < 5){
     heaterPID.SetTunings(consKp, consKi, consKd);
-      Serial.println("Switching to conservative strategy heating");
+      Serial.println("Conservative strategy heating");
   }
   else {
-    Serial.println("Switching to aggressive strategy heating");
+    Serial.println("Aggressive strategy heating");
     heaterPID.SetTunings(aggKp, aggKi, aggKd);
   }
 
@@ -125,13 +125,11 @@ void Tp101::ControlMoisture(){
   moisturePID.Compute();
   unsigned long now = millis();
 
-
   if(now - moistureWindowStartTime > moistureWindowSize)
   { //time to shift the Relay Window
     moistureWindowStartTime += moistureWindowSize;
   }
-  //Serial.printf("%d - %d = %d > %d\n",now, windowStartTime, now - windowStartTime,  windowSize);
-//  Serial.printf("moistureOutput:%d, now: %d, windowStartTime: %d\n",moistureOuput, now, windowStartTime );
+
   if(moistureOuput > now - moistureWindowStartTime){
     if (!r4->IsOn()){
       Serial.println("Let it rain!");
@@ -189,14 +187,14 @@ Serial.printf("CurrentHour %d : lightsOn: %d lightsOff: %d\n", currentHour, ligh
     else
       readings["lamp"] = "off";
 
-      readings["lampRunningTime"] = r1->OpenTimeSinceReset();
+      readings["lampRunningTime"] = String(r1->OpenTimeSinceReset());
 
       if (r2->IsOn())
         readings["heating"] = "on";
       else
         readings["heating"] = "off";
 
-      readings["heatingRunningTime"] = r2->OpenTimeSinceReset();
+      readings["heatingRunningTime"] = String(r2->OpenTimeSinceReset());
 
 
 
@@ -205,12 +203,12 @@ Serial.printf("CurrentHour %d : lightsOn: %d lightsOff: %d\n", currentHour, ligh
       else
         readings["pump"] = "off";
 
-        readings["pumpRunningTime"] = r4->OpenTimeSinceReset();
+        readings["pumpRunningTime"] = String(r4->OpenTimeSinceReset());
 
     //JsonObject& timeObj = root.createNestedObject().createNestedObject("time");
 
     timeObj["localtime"] = timeservice->GetLocalTime(localTimeBuffer, 19);
-    timeObj["timestamp"] = timeservice->GetTimestamp();
+    timeObj["timestamp"] = String(timeservice->GetTimestamp());
 
 
     root.prettyPrintTo(Serial);
