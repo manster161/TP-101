@@ -2,7 +2,7 @@
 #include "relay.h"
 
 
-long startMillis, totalRunningTime;
+
 
   Relay::Relay(char pin, const char* name){
     //Check if pin is valid
@@ -28,8 +28,12 @@ long startMillis, totalRunningTime;
   }
 
   void Relay::Off(){
-    if (_isOn)
+    if (_isOn){
       totalRunningTime += millis() - startMillis;
+      Serial.printf("Added runningtime to %s and is now %d\n", _namebuffer, totalRunningTime );
+      totalRunningTime += millis() - startMillis;
+    }
+
 
     digitalWrite(_pin, LOW);
     _isOn = false;

@@ -10,7 +10,7 @@
 #define PID_TIMER 5000
 
 extern char* global_timezoneDbApiKey;
-char buffer[256];
+char buffer[2048];
 
 ESP8266WebServer server(80);
 Network* network = new Network(&server);
@@ -26,7 +26,7 @@ void HandleRoot() {
 }
 
 void Statistics() {
-  server.send(200, "application/json", tp101->GetStatus(buffer, 256));
+  server.send(200, "application/json", tp101->GetStatus(buffer, 2048));
 }
 
 bool SetupServer(){

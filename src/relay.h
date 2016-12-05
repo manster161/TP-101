@@ -15,6 +15,7 @@ private:
   bool _isOn = false;
   char _buffer[20];
   char _namebuffer[10];
+  long startMillis, totalRunningTime;
 };
 
 #endif
