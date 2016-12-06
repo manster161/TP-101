@@ -14,8 +14,8 @@ int lightsOff = 23;
 int windowSize = 5000;
 long windowStartTime;
 
-double aggKp=4, aggKi=0.2, aggKd=1;
-double consKp=1, consKi=0.05, consKd=0.25;
+double aggKp=1, aggKi=0.05, aggKd=0.5;
+double consKp=0.5, consKi=0.01, consKd=0.1;
 
 int moistureWindowSize = 5000;
 long moistureWindowStartTime;
