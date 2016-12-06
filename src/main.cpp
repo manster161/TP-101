@@ -13,7 +13,10 @@ extern char* global_timezoneDbApiKey;
 char buffer[2048];
 
 ESP8266WebServer server(80);
-Network network(&server);
+WiFiClient wifiClient; //= new WiFiClient();
+HTTPClient httpClient; // = new HTTPClient();
+ESP8266WiFiMulti wifiMulti;// = new ESP8266WiFiMulti();
+Network network;
 
 TickerScheduler scheduler(1);
 TickerScheduler pidScheduler(2);
@@ -52,9 +55,9 @@ void setup(void){
   pinMode(RELAY2PIN, OUTPUT);
   pinMode(RELAY3PIN, OUTPUT);
   pinMode(RELAY4PIN, OUTPUT);
-  Serial.println("Create network");
-  
+
   Serial.println("Init TP");
+  network.Init(&server, &wifiClient, &httpClient, &wifiMulti);
   tp101.Init(&network);// = new Tp101(network);
 
   Serial.println("Starting webserver");

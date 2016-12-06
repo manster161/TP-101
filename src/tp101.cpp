@@ -9,8 +9,6 @@ JsonObject& readings = root.createNestedObject().createNestedObject("readings");
 JsonObject& timeObj = root.createNestedObject().createNestedObject("time");
 
 char localTimeBuffer[20];
-int minTemp = 20;
-int maxTemp = 25;
 int lightsOn = 7;
 int lightsOff = 23;
 int windowSize = 5000;
@@ -19,14 +17,19 @@ long windowStartTime;
 double aggKp=4, aggKi=0.2, aggKd=1;
 double consKp=1, consKi=0.05, consKd=0.25;
 
-
 int moistureWindowSize = 5000;
 long moistureWindowStartTime;
 
 extern char* global_thingSpeakApiKey;
+double _temperature, heaterOuput;
+double _moisture, moistureOuput;
+double heaterSetpoint = 24;
+double moistureSetpoint = 70;
+double _humidity;
 
-double heaterSetpoint, _temperature, heaterOuput;
-double moistureSetpoint, _moisture, moistureOuput;
+int foundNetworks = 0;
+unsigned long _previousMillis = 0;
+unsigned long _postInterval = 60000;
 
 PID heaterPID(&_temperature, &heaterOuput, &heaterSetpoint, consKp,consKi,consKd, DIRECT);
 PID moisturePID(&_moisture, &moistureOuput, &moistureSetpoint, consKp,consKi,consKd, DIRECT);
@@ -60,8 +63,6 @@ void Tp101::Init(Network* network){
 
   this->network = network;
 
-  network->Init();
-
   timeservice.Init(network->GetWiFiClient());
 
   Serial.println("network initialization done");
@@ -69,9 +70,6 @@ void Tp101::Init(Network* network){
   timeservice.UpdateTime();
 
   windowStartTime= millis();
-
-  heaterSetpoint = 24;
-  moistureSetpoint = 70;
 
   heaterPID.SetOutputLimits(0, 5000);
   heaterPID.SetMode(AUTOMATIC);
@@ -81,11 +79,11 @@ void Tp101::Init(Network* network){
 
 }
 
-float Tp101::GetTemperature(){
+double Tp101::GetTemperature(){
   return _temperature;
 }
 
-float Tp101::GetHumidity(){
+double Tp101::GetHumidity(){
   return _humidity;
 }
 
@@ -93,7 +91,7 @@ void Tp101::ControlHeater(){
 
   double gap = abs(heaterSetpoint - _temperature);
 
-  if (gap < 5){
+  if (gap < 15){
     heaterPID.SetTunings(consKp, consKi, consKd);
       Serial.println("Conservative strategy heating");
   }
@@ -171,8 +169,7 @@ void Tp101::Handle(){
 
   int currentHour = timeservice.GetCurrentHour();
 
-//
-Serial.printf("CurrentHour %d : lightsOn: %d lightsOff: %d\n", currentHour, lightsOn, lightsOff );
+
   if (currentHour >= lightsOn && currentHour <= lightsOff)
   {
     if (!LigthRelay.IsOn()){

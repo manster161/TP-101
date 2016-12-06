@@ -10,32 +10,41 @@ const char* ssid = "Alexanderplatz";
 int connectionTimeout = 5000;
 extern const char* global_thingSpeakApiKey;
 
-WiFiClient wifiClient; //= new WiFiClient();
-HTTPClient httpClient; // = new HTTPClient();
-ESP8266WiFiMulti wifiMulti;// = new ESP8266WiFiMulti();
 
- Network::Network(ESP8266WebServer* server){
-  this->server = server;
+
+
+Network::Network(){
 
 }
 
-bool Network::Init(){
+bool Network::Init(ESP8266WebServer* server, WiFiClient* wifiClient,HTTPClient* httpClient, ESP8266WiFiMulti* wifiMulti)
+{
+  
+  this->server = server;
+  this->wifiClient = wifiClient;
+  this->httpClient = httpClient;
+  this->wifiMulti = wifiMulti;
+
   int foundNetworks = ScanNetworks();
   bool connected = false;
   for (int i = 0; i < foundNetworks; i++){
+    Serial.printf("Checking network %n\n", i );
     if (WiFi.SSID(i) == ssid){
-      connected =  ConnectToNetwork(ssid, "snopp161", wifiMulti, httpClient);
+      connected =  ConnectToNetwork(ssid, "snopp161");
     }
   }
   return connected;
 }
 
-bool Network::ConnectToNetwork(const char* ssid, const char* password,ESP8266WiFiMulti* wifiMulti, HTTPClient* httpClient){
+bool Network::ConnectToNetwork(const char* ssid, const char* password){
+  Serial.println("WiFi.mode(WIFI_STA)");
   WiFi.mode(WIFI_STA);
   WiFi.disconnect();
   delay(100);
 
+Serial.println("Add ap");
   wifiMulti->addAP(ssid, password);
+  Serial.println("httpClient->setReuse(true)");
   httpClient->setReuse(true);
 
   Serial.print("\n\r \n\rWorking to connect");
@@ -60,7 +69,8 @@ bool Network::ConnectToNetwork(const char* ssid, const char* password,ESP8266WiF
 
 
 WiFiClient* Network::GetWiFiClient(){
-  return this->wifiClient;
+  Serial.println("GetWiFiClient");
+  return wifiClient;
 }
 
 int Network::ScanNetworks(){

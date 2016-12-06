@@ -15,5 +15,3 @@ esptool.py --port /dev/tty.USB0  write_flash --flash_mode qio --flash_size 32m 0
 
 
 sudo esptool.py --port /dev/tty.ESP  write_flash --flash_mode qio --flash_size 32m 0x00000 .pioenvs/esp12e/firmware.bin
-
-sudo ln -s /dev/tty.wch\ ch341\ USB\=\>RS232\ 1450 /dev/tty.ESP

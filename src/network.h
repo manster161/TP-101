@@ -9,10 +9,10 @@
 
 class Network {
 public:
-  Network(ESP8266WebServer* server);
-  bool Init(void);
+  Network();
+  bool Init(ESP8266WebServer* , WiFiClient* ,HTTPClient* , ESP8266WiFiMulti* );
   int ScanNetworks(void);
-  bool ConnectToNetwork(const char*, const char*,ESP8266WiFiMulti*, HTTPClient*);
+  bool ConnectToNetwork(const char*, const char*);
   void HandleRoot(void);
   bool SetupServer(void);
   void UpdateThingspeak(int temp, int humidity,int moisture, int heating, int lights, int water);
@@ -23,10 +23,10 @@ public:
 private:
   const char * IpToCharArray();
   void Post(String);
-  ESP8266WiFiMulti* wifiMulti;
   ESP8266WebServer* server;
-  HTTPClient* httpClient;
   WiFiClient* wifiClient;
+  HTTPClient* httpClient;
+  ESP8266WiFiMulti* wifiMulti;
 };
 
 #endif
