@@ -36,7 +36,19 @@ Relay VentilationRelay(14, "Ventilation");
 Relay WaterRelay(16, "Water");
 DHT dht(DHTPIN, DHTTYPE, 11);
 
-Tp101::Tp101(Network* network){
+MoistureSensor moisturesensor;
+TimeService timeservice;
+
+Tp101::Tp101(){
+
+
+}
+Tp101::~Tp101(){
+
+
+}
+
+void Tp101::Init(Network* network){
 
   LigthRelay.Off();
 
@@ -46,16 +58,15 @@ Tp101::Tp101(Network* network){
 
   WaterRelay.Off();
 
-  _moisturesensor = new MoistureSensor();
-  timeservice = new TimeService(network->GetWiFiClient());
   this->network = network;
-}
 
-void Tp101::Init(){
   network->Init();
+
+  timeservice.Init(network->GetWiFiClient());
+
   Serial.println("network initialization done");
 
-  timeservice->UpdateTime();
+  timeservice.UpdateTime();
 
   windowStartTime= millis();
 
@@ -158,7 +169,7 @@ void Tp101::HandlePID(){
 
 void Tp101::Handle(){
 
-  int currentHour = timeservice->GetCurrentHour();
+  int currentHour = timeservice.GetCurrentHour();
 
 //
 Serial.printf("CurrentHour %d : lightsOn: %d lightsOff: %d\n", currentHour, lightsOn, lightsOff );
@@ -213,8 +224,8 @@ Serial.printf("CurrentHour %d : lightsOn: %d lightsOff: %d\n", currentHour, ligh
 
     //JsonObject& timeObj = root.createNestedObject().createNestedObject("time");
 
-    timeObj["localtime"] = timeservice->GetLocalTime(localTimeBuffer, 19);
-    timeObj["timestamp"] = String(timeservice->GetTimestamp());
+    timeObj["localtime"] = timeservice.GetLocalTime(localTimeBuffer, 19);
+    timeObj["timestamp"] = String(timeservice.GetTimestamp());
 
 
     root.prettyPrintTo(Serial);
@@ -228,7 +239,7 @@ void Tp101::UpdateStatistics(){
   if (hum >= 0 && hum <= 100)
     _humidity = hum;
 
-  _moisture = _moisturesensor->Read();
+  _moisture = moisturesensor.Read();
 
   float temp =  dht.readTemperature(false);     // Read humidity (percent)
 

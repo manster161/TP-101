@@ -10,11 +10,13 @@ const char* ssid = "Alexanderplatz";
 int connectionTimeout = 5000;
 extern const char* global_thingSpeakApiKey;
 
+WiFiClient wifiClient; //= new WiFiClient();
+HTTPClient httpClient; // = new HTTPClient();
+ESP8266WiFiMulti wifiMulti;// = new ESP8266WiFiMulti();
+
  Network::Network(ESP8266WebServer* server){
   this->server = server;
-  wifiClient = new WiFiClient();
-  httpClient = new HTTPClient();
-  wifiMulti = new ESP8266WiFiMulti();
+
 }
 
 bool Network::Init(){

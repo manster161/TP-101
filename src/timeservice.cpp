@@ -4,14 +4,17 @@ StaticJsonBuffer<300> timeServiceJsonBuffer;
 String timezonedb = "api.timezonedb.com";
 extern const char* global_timezoneDbApiKey;
 
-TimeService::TimeService(WiFiClient* client){
-  this->client = client;
+TimeService::TimeService(){
+  
 }
 
 TimeService::~TimeService(){
 
 }
 
+void TimeService::Init(WiFiClient* client){
+    this->client = client;
+}
 char* TimeService::GetLocalTime(char* buffer, int bufferLength){
     time_t n = now();
     sprintf(buffer, "%d:%d:%d", hour(n), minute(n), second(n));

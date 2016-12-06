@@ -10,9 +10,9 @@
 
 class Tp101{
 public:
-  Tp101(Network*);
+  Tp101();
   ~Tp101(void);
-  void Init();
+  void Init(Network*);
   void UpdateStatistics();
   void HandlePID();
   void Handle();
@@ -24,10 +24,9 @@ public:
   const char* GetNetwork();
 
 private:
-  
+
   Network* network;
-  MoistureSensor* _moisturesensor;
-  TimeService* timeservice;
+  
   int foundNetworks = 0;
   int _humidity, _temperature, _moisture;
   int _maxTemp = 25;
