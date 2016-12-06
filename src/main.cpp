@@ -10,13 +10,14 @@
 #define PID_TIMER 5000
 
 extern char* global_timezoneDbApiKey;
-char buffer[256];
+char buffer[2048];
 
 ESP8266WebServer server(80);
-DHT dht(DHTPIN, DHTTYPE, 11);
+Network network(&server);
+
 TickerScheduler scheduler(1);
 TickerScheduler pidScheduler(2);
-Tp101* tp101;
+Tp101 tp101;
 
 
 void HandleRoot() {
@@ -25,7 +26,7 @@ void HandleRoot() {
 }
 
 void Statistics() {
-  server.send(200, "application/json", tp101->GetStatus(buffer, 256));
+  server.send(200, "application/json", tp101.GetStatus(buffer, 2048));
 }
 
 bool SetupServer(){
@@ -38,9 +39,9 @@ bool SetupServer(){
 
 void updateStatistics(){
   Serial.println("UpdateStatistics");
-  tp101->UpdateStatistics();
-  tp101->Handle();
-  tp101->HandlePID();
+  tp101.UpdateStatistics();
+  tp101.Handle();
+  tp101.HandlePID();
 }
 
 
@@ -52,11 +53,10 @@ void setup(void){
   pinMode(RELAY3PIN, OUTPUT);
   pinMode(RELAY4PIN, OUTPUT);
   Serial.println("Create network");
-  Network* network = new Network(&server);
-  Serial.println("Create TP");
-  tp101 = new Tp101(network);
+  
   Serial.println("Init TP");
-  tp101->Init();
+  tp101.Init(&network);// = new Tp101(network);
+
   Serial.println("Starting webserver");
   SetupServer();
   Serial.println("Setup done");

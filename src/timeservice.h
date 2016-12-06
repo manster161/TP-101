@@ -9,9 +9,9 @@
 
 class TimeService {
 public:
-   TimeService(WiFiClient *);
+   TimeService();
    ~TimeService();
-
+   void Init(WiFiClient *);
    void UpdateTime();
    char*  GetLocalTime(char*, int);
    long GetTimestamp();

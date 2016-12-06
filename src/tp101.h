@@ -10,27 +10,23 @@
 
 class Tp101{
 public:
-  Tp101(Network*);
+  Tp101();
   ~Tp101(void);
-  void Init();
+  void Init(Network*);
   void UpdateStatistics();
   void HandlePID();
   void Handle();
   float GetTemperature();
+  void ControlHeater();
+  void ControlMoisture();
   float GetHumidity();
   char* GetStatus(char* buffer, size_t bufferSize);
   const char* GetNetwork();
 
 private:
-  StaticJsonBuffer<200> jsonBuffer;
-  Relay* r1;
-  Relay* r2;
-  Relay* r3;
-  Relay* r4;
-  DHT* dht;
+
   Network* network;
-  MoistureSensor* _moisturesensor;
-  TimeService* timeservice;
+  
   int foundNetworks = 0;
   int _humidity, _temperature, _moisture;
   int _maxTemp = 25;

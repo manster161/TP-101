@@ -2,7 +2,7 @@
 #include <PID_v1.h>
 #include <ArduinoJson.h>
 
-StaticJsonBuffer<256> jsonBuffer;
+StaticJsonBuffer<4096> jsonBuffer;
 JsonArray& root = jsonBuffer.createArray();
 JsonObject& sensors = root.createNestedObject().createNestedObject("network");
 JsonObject& readings = root.createNestedObject().createNestedObject("readings");
@@ -15,37 +15,70 @@ int lightsOn = 7;
 int lightsOff = 23;
 int windowSize = 5000;
 long windowStartTime;
+
+double aggKp=4, aggKi=0.2, aggKd=1;
+double consKp=1, consKi=0.05, consKd=0.25;
+
+
+int moistureWindowSize = 5000;
+long moistureWindowStartTime;
+
 extern char* global_thingSpeakApiKey;
 
 double heaterSetpoint, _temperature, heaterOuput;
-PID heaterPID(&_temperature, &heaterOuput, &heaterSetpoint, 2,5,1, DIRECT);
+double moistureSetpoint, _moisture, moistureOuput;
 
-Tp101::Tp101(Network* network){
-  r1 = new Relay(RELAY1PIN, "Lights");
-  r1->Off();
-  r2 = new Relay(RELAY2PIN, "Heating");
-  r2->Off();
-  r3 = new Relay(RELAY3PIN, "Air");
-  r3->Off();
-  r4 = new Relay(RELAY4PIN, "Water");
-  r4->Off();
-  dht = new DHT(DHTPIN, DHTTYPE, 11);
-  _moisturesensor = new MoistureSensor();
-  timeservice = new TimeService(network->GetWiFiClient());
-  this->network = network;
+PID heaterPID(&_temperature, &heaterOuput, &heaterSetpoint, consKp,consKi,consKd, DIRECT);
+PID moisturePID(&_moisture, &moistureOuput, &moistureSetpoint, consKp,consKi,consKd, DIRECT);
+Relay LigthRelay(13, "Lights");
+Relay HeaterRelay(12, "Heating");
+Relay VentilationRelay(14, "Ventilation");
+Relay WaterRelay(16, "Water");
+DHT dht(DHTPIN, DHTTYPE, 11);
+
+MoistureSensor moisturesensor;
+TimeService timeservice;
+
+Tp101::Tp101(){
+
+
+}
+Tp101::~Tp101(){
+
+
 }
 
-void Tp101::Init(){
+void Tp101::Init(Network* network){
+
+  LigthRelay.Off();
+
+  HeaterRelay.Off();
+
+  VentilationRelay.Off();
+
+  WaterRelay.Off();
+
+  this->network = network;
+
   network->Init();
+
+  timeservice.Init(network->GetWiFiClient());
+
   Serial.println("network initialization done");
 
-  timeservice->UpdateTime();
+  timeservice.UpdateTime();
 
   windowStartTime= millis();
 
   heaterSetpoint = 24;
+  moistureSetpoint = 70;
+
   heaterPID.SetOutputLimits(0, 5000);
   heaterPID.SetMode(AUTOMATIC);
+
+  moisturePID.SetOutputLimits(0, 5000);
+  moisturePID.SetMode(AUTOMATIC);
+
 }
 
 float Tp101::GetTemperature(){
@@ -56,54 +89,101 @@ float Tp101::GetHumidity(){
   return _humidity;
 }
 
-void Tp101::HandlePID(){
-    heaterPID.Compute();
+void Tp101::ControlHeater(){
 
-  /************************************************
-  * turn the output pin on/off based on pid output
-  ************************************************/
- unsigned long now = millis();
+  double gap = abs(heaterSetpoint - _temperature);
 
- if(now - windowStartTime > windowSize)
- { //time to shift the Relay Window
-   windowStartTime += windowSize;
- }
- Serial.printf("%d - %d = %d > %d\n",now, windowStartTime, now - windowStartTime,  windowSize);
- Serial.printf("heaterOutput:%d, now: %d, windowStartTime: %d\n",heaterOuput, now, windowStartTime );
- if(heaterOuput > now - windowStartTime){
-   if (!r2->IsOn()){
-     Serial.println("Switching on heating");
-   }
-   r2->On();
- }
- else {
-   if (r2->IsOn()){
-     Serial.println("Switching off heating");
-   }
-   r2->Off();
- }
+  if (gap < 5){
+    heaterPID.SetTunings(consKp, consKi, consKd);
+      Serial.println("Conservative strategy heating");
+  }
+  else {
+    Serial.println("Aggressive strategy heating");
+    heaterPID.SetTunings(aggKp, aggKi, aggKd);
+  }
+
+  heaterPID.Compute();
+  unsigned long now = millis();
+
+  if(now - windowStartTime > windowSize)
+  { //time to shift the Relay Window
+    windowStartTime += windowSize;
+  }
+//  Serial.printf("%d - %d = %d > %d\n",now, windowStartTime, now - windowStartTime,  windowSize);
+//  Serial.printf("heaterOutput:%d, now: %d, windowStartTime: %d\n",heaterOuput, now, windowStartTime );
+  if(heaterOuput > now - windowStartTime){
+    if (!HeaterRelay.IsOn()){
+      Serial.println("Switching on heating");
+    }
+    HeaterRelay.On();
+  }
+  else {
+    if (HeaterRelay.IsOn()){
+      Serial.println("Switching off heating");
+    }
+    HeaterRelay.Off();
 }
+}
+
+void Tp101::ControlMoisture(){
+
+
+  double gap = abs(moistureSetpoint - _moisture);
+
+  if (gap < 50){
+    moisturePID.SetTunings(consKp, consKi, consKd);
+    Serial.println("Switching to conservative strategy moisture");
+  }
+  else {
+    moisturePID.SetTunings(aggKp, aggKi, aggKd);
+    Serial.println("Switching to conservative strategy moisture");
+  }
+
+  moisturePID.Compute();
+  unsigned long now = millis();
+
+  if(now - moistureWindowStartTime > moistureWindowSize)
+  { //time to shift the Relay Window
+    moistureWindowStartTime += moistureWindowSize;
+  }
+
+  if(moistureOuput > now - moistureWindowStartTime){
+    if (!WaterRelay.IsOn()){
+      Serial.println("Let it rain!");
+    }
+    WaterRelay.On();
+  }
+  else {
+    if (WaterRelay.IsOn()){
+      Serial.println("Sun is shining, the Weather is sweat");
+    }
+    WaterRelay.Off();
+}
+}
+
+void Tp101::HandlePID(){
+  ControlMoisture();
+  ControlHeater();
+ }
+
 
 void Tp101::Handle(){
 
-  if (timeservice->GetCurrentHour() >= lightsOn &&  timeservice->GetCurrentHour() < lightsOff){
-      Serial.println("Its day now, letting the sun come out");
-    r1->On();
-  } else if (timeservice->GetCurrentHour() < lightsOn &&  timeservice->GetCurrentHour() >=
-   lightsOff){
-    Serial.println("Its night again, see you tomorrow");
-    r1->Off();
-  }
+  int currentHour = timeservice.GetCurrentHour();
 
-  int moistureLevel = _moisturesensor->Read();
-  if (moistureLevel < 30 && !r4->IsOn()){
-    Serial.println("Earth is dry. Letting the rain fall");
-    r4->On();
-  }
-
-  if (moistureLevel > 70 && r4->IsOn()){
-    Serial.println("Earth is nice and moist again. Stopping rainfall");
-    r4->Off();
+//
+Serial.printf("CurrentHour %d : lightsOn: %d lightsOff: %d\n", currentHour, lightsOn, lightsOff );
+  if (currentHour >= lightsOn && currentHour <= lightsOff)
+  {
+    if (!LigthRelay.IsOn()){
+        Serial.println("Its day now, letting the sun come out");
+    }
+    LigthRelay.On();
+  } else {
+    if (LigthRelay.IsOn()){
+        Serial.println("Its night again, see you tomorrow");
+    }
+    LigthRelay.Off();
   }
 }
 
@@ -119,10 +199,34 @@ void Tp101::Handle(){
     readings["humidity"] = _humidity;
     readings["moisture"] = _moisture;
 
+    if (LigthRelay.IsOn())
+      readings["lamp"] = "on";
+    else
+      readings["lamp"] = "off";
+
+      readings["lampRunningTime"] = String(LigthRelay.OpenTimeSinceReset());
+
+      if (HeaterRelay.IsOn())
+        readings["heating"] = "on";
+      else
+        readings["heating"] = "off";
+
+      readings["heatingRunningTime"] = String(HeaterRelay.OpenTimeSinceReset());
+
+
+
+      if (WaterRelay.IsOn())
+        readings["pump"] = "on";
+      else
+        readings["pump"] = "off";
+
+        readings["pumpRunningTime"] = String(WaterRelay.OpenTimeSinceReset());
+
     //JsonObject& timeObj = root.createNestedObject().createNestedObject("time");
 
-    timeObj["localtime"] = timeservice->GetLocalTime(localTimeBuffer, 19);
-    timeObj["time"] = timeservice->GetTimestamp();
+    timeObj["localtime"] = timeservice.GetLocalTime(localTimeBuffer, 19);
+    timeObj["timestamp"] = String(timeservice.GetTimestamp());
+
 
     root.prettyPrintTo(Serial);
     root.printTo(buffer, bufferSize);
@@ -130,14 +234,15 @@ void Tp101::Handle(){
 }
 
 void Tp101::UpdateStatistics(){
-  int hum = dht->readHumidity();
+  int hum = dht.readHumidity();
 
   if (hum >= 0 && hum <= 100)
     _humidity = hum;
 
-  _moisture = _moisturesensor->Read();
+  _moisture = moisturesensor.Read();
 
-  float temp =  dht->readTemperature(false);     // Read humidity (percent)
+  float temp =  dht.readTemperature(false);     // Read humidity (percent)
+
   if (temp >= 0 && temp <= 100)
     _temperature = temp;
 
@@ -150,21 +255,28 @@ void Tp101::UpdateStatistics(){
       int lights = 0;
       int water = 0;
 
-      if (r1->IsOn()){
+      if (LigthRelay.IsOn()){
         lights = 1;
       }
-      if (r2->IsOn()){
+      else
+        lights = 0;
+
+      if (HeaterRelay.IsOn()){
         heating = 1;
       }
-      if (r4->IsOn()){
+      else
+        heating = 0;
+
+      if (WaterRelay.IsOn()){
         water = 1;
       }
+      else water = 0;
 
       network->UpdateThingspeak(_temperature, _humidity, _moisture,  heating, lights, water);
   }
-  else{
+  else
+  {
     int secondsTillUpdate = (int) (_postInterval - elapsedTime)/1000;
-    Serial.printf("%d Seconds till next update\n", secondsTillUpdate);
-  }
 
+  }
 }
