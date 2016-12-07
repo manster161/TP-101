@@ -14,8 +14,8 @@ int lightsOff = 23;
 int windowSize = 5000;
 long windowStartTime;
 
-double aggKp=1, aggKi=0.05, aggKd=0.5;
-double consKp=0.5, consKi=0.01, consKd=0.1;
+extern double heaterKp, heaterKi, heaterKd;
+extern double waterKp, waterKi, waterKd;
 
 int moistureWindowSize = 5000;
 long moistureWindowStartTime;
@@ -31,8 +31,8 @@ int foundNetworks = 0;
 unsigned long _previousMillis = 0;
 unsigned long _postInterval = 60000;
 
-PID heaterPID(&_temperature, &heaterOuput, &heaterSetpoint, consKp,consKi,consKd, DIRECT);
-PID moisturePID(&_moisture, &moistureOuput, &moistureSetpoint, consKp,consKi,consKd, DIRECT);
+PID heaterPID(&_temperature, &heaterOuput, &heaterSetpoint, heaterKp,heaterKi,heaterKd, DIRECT);
+PID moisturePID(&_moisture, &moistureOuput, &moistureSetpoint, waterKp,waterKi,waterKd, DIRECT);
 Relay LigthRelay(13, "Lights");
 Relay HeaterRelay(12, "Heating");
 Relay VentilationRelay(14, "Ventilation");
@@ -89,16 +89,16 @@ double Tp101::GetHumidity(){
 
 void Tp101::ControlHeater(){
 
-  double gap = abs(heaterSetpoint - _temperature);
+  //double gap = abs(heaterSetpoint - _temperature);
 
-  if (gap < 15){
+  /*if (gap < 15){
     heaterPID.SetTunings(consKp, consKi, consKd);
       Serial.println("Conservative strategy heating");
   }
   else {
     Serial.println("Aggressive strategy heating");
     heaterPID.SetTunings(aggKp, aggKi, aggKd);
-  }
+  }*/
 
   heaterPID.Compute();
   unsigned long now = millis();
@@ -126,8 +126,8 @@ void Tp101::ControlHeater(){
 void Tp101::ControlMoisture(){
 
 
-  double gap = abs(moistureSetpoint - _moisture);
-
+  //double gap = abs(moistureSetpoint - _moisture);
+/*
   if (gap < 50){
     moisturePID.SetTunings(consKp, consKi, consKd);
     Serial.println("Switching to conservative strategy moisture");
@@ -136,7 +136,7 @@ void Tp101::ControlMoisture(){
     moisturePID.SetTunings(aggKp, aggKi, aggKd);
     Serial.println("Switching to conservative strategy moisture");
   }
-
+*/
   moisturePID.Compute();
   unsigned long now = millis();
 
@@ -153,7 +153,7 @@ void Tp101::ControlMoisture(){
   }
   else {
     if (WaterRelay.IsOn()){
-      Serial.println("Sun is shining, the Weather is sweat");
+      Serial.println("Sun is shining, the Weather is sweet");
     }
     WaterRelay.Off();
 }

@@ -22,6 +22,9 @@ TickerScheduler scheduler(1);
 TickerScheduler pidScheduler(2);
 Tp101 tp101;
 
+double heaterKp=2, heaterKi=5, heaterKd=1;
+double waterKp=2, waterKi=5, waterKd=1;
+
 
 void HandleRoot() {
   server.send(200, "text/plain", "Hello from TP-101.\nRead the statistcs at /stat");
@@ -51,10 +54,6 @@ void updateStatistics(){
 void setup(void){
   Serial.begin(115200);
   Serial.println("Setup relays");
-  pinMode(RELAY1PIN, OUTPUT);
-  pinMode(RELAY2PIN, OUTPUT);
-  pinMode(RELAY3PIN, OUTPUT);
-  pinMode(RELAY4PIN, OUTPUT);
 
   Serial.println("Init TP");
   network.Init(&server, &wifiClient, &httpClient, &wifiMulti);
