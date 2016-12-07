@@ -26,6 +26,14 @@ double heaterKp=2, heaterKi=5, heaterKd=1;
 double waterKp=2, waterKi=5, waterKd=1;
 
 
+bool IsNumeric(String s){
+  for (int i = 0; i < s.length(); i++){
+    if (!isDigit(s[0]))
+    return false;
+  }
+  return true;
+}
+
 void HandleRoot() {
   server.send(200, "text/plain", "Hello from TP-101.\nRead the statistcs at /stat");
   delay(100);
@@ -35,9 +43,46 @@ void Statistics() {
   server.send(200, "application/json", tp101.GetStatus(buffer, 2048));
 }
 
+void Heater() {
+  String p = server.arg("p");
+  String i = server.arg("i");
+  String d = server.arg("d");
+  if (IsNumeric(p)){
+    heaterKp = (double)p.toInt();
+  }
+  if (IsNumeric(i)){
+    heaterKi = (double)i.toInt();
+  }
+  if (IsNumeric(i)){
+    heaterKd = (double)d.toInt();
+  }
+  sprintf(buffer, "Current heater pid values\vp: %d\ni: %d\nd:%d",heaterKp, heaterKi, heaterKd);
+  server.send(200, "text/plain", buffer);
+}
+
+
+void Pump() {
+  String p = server.arg("p");
+  String i = server.arg("i");
+  String d = server.arg("d");
+  if (IsNumeric(p)){
+    heaterKp = (double)p.toInt();
+  }
+  if (IsNumeric(i)){
+    heaterKi = (double)i.toInt();
+  }
+  if (IsNumeric(i)){
+    heaterKd = (double)d.toInt();
+  }
+  sprintf(buffer, "Current pump pid values\vp: %d\ni: %d\nd:%d",heaterKp, heaterKi, heaterKd);
+  server.send(200, "text/plain", buffer);
+}
+
 bool SetupServer(){
   server.on("/", HandleRoot);
   server.on("/stat", Statistics);
+  server.on("/settings/heater", Heater);
+  server.on("/settings/pump", Heater);
   server.begin();
   Serial.println("HTTP server started");
 
