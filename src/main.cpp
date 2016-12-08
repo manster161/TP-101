@@ -56,7 +56,7 @@ void Heater() {
   if (IsNumeric(i)){
     heaterKd = (double)d.toInt();
   }
-  sprintf(buffer, "Current heater pid values\vp: %d\ni: %d\nd:%d",heaterKp, heaterKi, heaterKd);
+  sprintf(buffer, "Current heater pid values p: %d %s i: %d %s d:%d %s",heaterKp, p.c_str(), heaterKi, i.c_str(), heaterKd, d.c_str());
   server.send(200, "text/plain", buffer);
 }
 

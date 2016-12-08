@@ -21,6 +21,7 @@ int moistureWindowSize = 5000;
 long moistureWindowStartTime;
 
 extern char* global_thingSpeakApiKey;
+char tpTextBuffer[256];
 double _temperature, heaterOuput;
 double _moisture, moistureOuput;
 double heaterSetpoint = 24;
@@ -190,6 +191,10 @@ void Tp101::Handle(){
     //JsonObject& sensors = root.createNestedObject().createNestedObject("network");
     sensors["ipaddress"] = network->GetIp();
     sensors["network"] = network->GetNetwork();
+
+    sprintf(tpTextBuffer, "Lamp pin %d, Heater pin %d, Water pin %d", LigthRelay.GetPin(), HeaterRelay.GetPin(), WaterRelay.GetPin());
+
+    sensors["pins"] = String(tpTextBuffer).c_str();
 
     //JsonObject& readings = root.createNestedObject().createNestedObject("readings");
     readings["temp"] = _temperature;

@@ -4,6 +4,7 @@
 
 
 
+
   Relay::Relay(char pin, const char* name){
     //Check if pin is valid
     _pin = pin;
@@ -17,6 +18,7 @@
  long Relay::OpenTimeSinceReset(){
     return totalRunningTime;
   }
+
 
   void Relay::On(){
 
@@ -37,6 +39,10 @@
 
     digitalWrite(_pin, LOW);
     _isOn = false;
+  }
+
+  char Relay::GetPin(){
+    return _pin;
   }
 
   bool Relay::IsOn(){
