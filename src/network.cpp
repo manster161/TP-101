@@ -9,9 +9,7 @@ String thingspeak = "api.thingspeak.com";
 const char* ssid = "Alexanderplatz";
 int connectionTimeout = 5000;
 extern const char* global_thingSpeakApiKey;
-
-
-
+extern int foundNetworks;
 
 Network::Network(){
 
@@ -19,13 +17,13 @@ Network::Network(){
 
 bool Network::Init(ESP8266WebServer* server, WiFiClient* wifiClient,HTTPClient* httpClient, ESP8266WiFiMulti* wifiMulti)
 {
-  
+
   this->server = server;
   this->wifiClient = wifiClient;
   this->httpClient = httpClient;
   this->wifiMulti = wifiMulti;
 
-  int foundNetworks = ScanNetworks();
+  foundNetworks = ScanNetworks();
   bool connected = false;
   for (int i = 0; i < foundNetworks; i++){
     Serial.printf("Checking network %n\n", i );
