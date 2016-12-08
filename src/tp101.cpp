@@ -3,6 +3,8 @@
 #include <ArduinoJson.h>
 
 
+#define HeaterPID 0
+#define WaterPID 1
 #define LIGHT  0
 #define HEATER 1
 #define AIR 2
@@ -99,7 +101,7 @@ void Tp101::ControlHeater(){
   if (temp >= 0 && temp <= 100)
     _temperature = temp;
 
-  pidArray[HEATER].Compute();
+  pidArray[HeaterPID].Compute();
 
   unsigned long now = millis();
 
@@ -126,7 +128,7 @@ void Tp101::ControlMoisture(){
 
   _moisture = moisturesensor.Read();
 
-  pidArray[WATER].Compute();
+  pidArray[WaterPID].Compute();
   unsigned long now = millis();
 
   if(now - waterStartTime > waterWindowSize)
