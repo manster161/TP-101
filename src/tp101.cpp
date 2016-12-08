@@ -2,6 +2,14 @@
 #include <PID_v1.h>
 #include <ArduinoJson.h>
 
+
+#define LIGHT  0
+#define HEATER 1
+#define AIR 2
+#define WATER 3
+
+
+DHT dht(DHTPIN, DHTTYPE, 11);
 StaticJsonBuffer<4096> jsonBuffer;
 JsonArray& root = jsonBuffer.createArray();
 JsonObject& sensors = root.createNestedObject().createNestedObject("network");
@@ -12,13 +20,15 @@ char localTimeBuffer[20];
 int lightsOn = 7;
 int lightsOff = 23;
 int windowSize = 5000;
-long windowStartTime;
+long heaterStartTime;
+long waterStartTime;
 
 extern double heaterKp, heaterKi, heaterKd;
 extern double waterKp, waterKi, waterKd;
 
-int moistureWindowSize = 5000;
-long moistureWindowStartTime;
+int waterWindowSize = 5000;
+int heaterWindowSize = 5000;
+
 
 extern char* global_thingSpeakApiKey;
 char tpTextBuffer[256];
@@ -32,16 +42,21 @@ int foundNetworks = 0;
 unsigned long _previousMillis = 0;
 unsigned long _postInterval = 60000;
 
-PID heaterPID(&_temperature, &heaterOuput, &heaterSetpoint, heaterKp,heaterKi,heaterKd, DIRECT);
-PID moisturePID(&_moisture, &moistureOuput, &moistureSetpoint, waterKp,waterKi,waterKd, DIRECT);
-Relay LigthRelay(13, "Lights");
-Relay HeaterRelay(12, "Heating");
-Relay VentilationRelay(14, "Ventilation");
-Relay WaterRelay(16, "Water");
-DHT dht(DHTPIN, DHTTYPE, 11);
 
 MoistureSensor moisturesensor;
 TimeService timeservice;
+PID pidArray [] = {
+  PID(&_temperature, &heaterOuput, &heaterSetpoint, heaterKp,heaterKi,heaterKd, DIRECT),
+  PID(&_moisture, &moistureOuput, &moistureSetpoint, waterKp,waterKi,waterKd, DIRECT),
+};
+
+Relay relays[] = {
+  Relay(13, "Lights"),
+  Relay(12, "Heating"),
+  Relay(14, "Ventilation"),
+  Relay(16, "Water"),
+};
+
 
 Tp101::Tp101(){
 
@@ -54,30 +69,19 @@ Tp101::~Tp101(){
 
 void Tp101::Init(Network* network){
 
-  LigthRelay.Off();
-
-  HeaterRelay.Off();
-
-  VentilationRelay.Off();
-
-  WaterRelay.Off();
-
+  relays[LIGHT].Off();
+  relays[HEATER].Off();
+  relays[AIR].Off();
+  relays[WATER].Off();
   this->network = network;
-
   timeservice.Init(network->GetWiFiClient());
-
   Serial.println("network initialization done");
-
   timeservice.UpdateTime();
-
-  windowStartTime= millis();
-
-  heaterPID.SetOutputLimits(0, 5000);
-  heaterPID.SetMode(AUTOMATIC);
-
-  moisturePID.SetOutputLimits(0, 5000);
-  moisturePID.SetMode(AUTOMATIC);
-
+  heaterStartTime= millis();
+  pidArray[HEATER].SetOutputLimits(0, 5000);
+  pidArray[HEATER].SetMode(AUTOMATIC);
+  pidArray[WATER].SetOutputLimits(0, 5000);
+  pidArray[WATER].SetMode(AUTOMATIC);
 }
 
 double Tp101::GetTemperature(){
@@ -90,73 +94,57 @@ double Tp101::GetHumidity(){
 
 void Tp101::ControlHeater(){
 
-  //double gap = abs(heaterSetpoint - _temperature);
+  float temp =  dht.readTemperature(false);     // Read humidity (percent)
 
-  /*if (gap < 15){
-    heaterPID.SetTunings(consKp, consKi, consKd);
-      Serial.println("Conservative strategy heating");
-  }
-  else {
-    Serial.println("Aggressive strategy heating");
-    heaterPID.SetTunings(aggKp, aggKi, aggKd);
-  }*/
+  if (temp >= 0 && temp <= 100)
+    _temperature = temp;
 
-  heaterPID.Compute();
+  pidArray[HEATER].Compute();
+
   unsigned long now = millis();
 
-  if(now - windowStartTime > windowSize)
+  if(now - heaterStartTime > heaterWindowSize)
   { //time to shift the Relay Window
-    windowStartTime += windowSize;
+    heaterStartTime += heaterWindowSize;
   }
-//  Serial.printf("%d - %d = %d > %d\n",now, windowStartTime, now - windowStartTime,  windowSize);
-//  Serial.printf("heaterOutput:%d, now: %d, windowStartTime: %d\n",heaterOuput, now, windowStartTime );
-  if(heaterOuput > now - windowStartTime){
-    if (!HeaterRelay.IsOn()){
+
+  if(heaterOuput > now - heaterStartTime){
+    if (!relays[HEATER].IsOn()){
       Serial.println("Switching on heating");
     }
-    HeaterRelay.On();
+    relays[HEATER].On();
   }
   else {
-    if (HeaterRelay.IsOn()){
+    if (relays[HEATER].IsOn()){
       Serial.println("Switching off heating");
     }
-    HeaterRelay.Off();
+    relays[HEATER].Off();
 }
 }
 
 void Tp101::ControlMoisture(){
 
+  _moisture = moisturesensor.Read();
 
-  //double gap = abs(moistureSetpoint - _moisture);
-/*
-  if (gap < 50){
-    moisturePID.SetTunings(consKp, consKi, consKd);
-    Serial.println("Switching to conservative strategy moisture");
-  }
-  else {
-    moisturePID.SetTunings(aggKp, aggKi, aggKd);
-    Serial.println("Switching to conservative strategy moisture");
-  }
-*/
-  moisturePID.Compute();
+  pidArray[WATER].Compute();
   unsigned long now = millis();
 
-  if(now - moistureWindowStartTime > moistureWindowSize)
+  if(now - waterStartTime > waterWindowSize)
   { //time to shift the Relay Window
-    moistureWindowStartTime += moistureWindowSize;
+    waterStartTime += waterWindowSize;
   }
 
-  if(moistureOuput > now - moistureWindowStartTime){
-    if (!WaterRelay.IsOn()){
+  if(moistureOuput > now - waterStartTime){
+    if (!relays[WATER].IsOn()){
       Serial.println("Let it rain!");
     }
-    WaterRelay.On();
+    relays[WATER].On();
   }
   else {
-    if (WaterRelay.IsOn()){
+    if (relays[WATER].IsOn()){
       Serial.println("Sun is shining, the Weather is sweet");
     }
-    WaterRelay.Off();
+    relays[WATER].Off();
 }
 }
 
@@ -170,61 +158,49 @@ void Tp101::Handle(){
 
   int currentHour = timeservice.GetCurrentHour();
 
-
   if (currentHour >= lightsOn && currentHour <= lightsOff)
   {
-    if (!LigthRelay.IsOn()){
+    if (!relays[LIGHT].IsOn()){
         Serial.println("Its day now, letting the sun come out");
     }
-    LigthRelay.On();
+    relays[LIGHT].On();
   } else {
-    if (LigthRelay.IsOn()){
+    if (relays[LIGHT].IsOn()){
         Serial.println("Its night again, see you tomorrow");
     }
-    LigthRelay.Off();
+    relays[LIGHT].Off();
   }
 }
 
  char* Tp101::GetStatus(char* buffer, size_t bufferSize){
 
-    //JsonArray& root = jsonBuffer.createArray();
-    //JsonObject& sensors = root.createNestedObject().createNestedObject("network");
     sensors["ipaddress"] = network->GetIp();
     sensors["network"] = network->GetNetwork();
-
-    sprintf(tpTextBuffer, "Lamp pin %d, Heater pin %d, Water pin %d", LigthRelay.GetPin(), HeaterRelay.GetPin(), WaterRelay.GetPin());
-
-    sensors["pins"] = String(tpTextBuffer).c_str();
-
-    //JsonObject& readings = root.createNestedObject().createNestedObject("readings");
     readings["temp"] = _temperature;
     readings["humidity"] = _humidity;
     readings["moisture"] = _moisture;
 
-    if (LigthRelay.IsOn())
+    if (relays[LIGHT].IsOn())
       readings["lamp"] = "on";
     else
       readings["lamp"] = "off";
 
-      readings["lampRunningTime"] = String(LigthRelay.OpenTimeSinceReset());
+      readings["lampRunningTime"] = String(relays[LIGHT].OpenTimeSinceReset());
 
-      if (HeaterRelay.IsOn())
+      if (relays[HEATER].IsOn())
         readings["heating"] = "on";
       else
         readings["heating"] = "off";
 
-      readings["heatingRunningTime"] = String(HeaterRelay.OpenTimeSinceReset());
+      readings["heatingRunningTime"] = String(relays[HEATER].OpenTimeSinceReset());
 
-
-
-      if (WaterRelay.IsOn())
+      if (relays[WATER].IsOn())
         readings["pump"] = "on";
       else
         readings["pump"] = "off";
 
-        readings["pumpRunningTime"] = String(WaterRelay.OpenTimeSinceReset());
+        readings["pumpRunningTime"] = String(relays[WATER].OpenTimeSinceReset());
 
-    //JsonObject& timeObj = root.createNestedObject().createNestedObject("time");
 
     timeObj["localtime"] = timeservice.GetLocalTime(localTimeBuffer, 19);
     timeObj["timestamp"] = String(timeservice.GetTimestamp());
@@ -241,13 +217,6 @@ void Tp101::UpdateStatistics(){
   if (hum >= 0 && hum <= 100)
     _humidity = hum;
 
-  _moisture = moisturesensor.Read();
-
-  float temp =  dht.readTemperature(false);     // Read humidity (percent)
-
-  if (temp >= 0 && temp <= 100)
-    _temperature = temp;
-
     unsigned long currentMillis = millis();
     unsigned long elapsedTime = currentMillis - _previousMillis;
     if(elapsedTime  >= _postInterval) {
@@ -257,19 +226,19 @@ void Tp101::UpdateStatistics(){
       int lights = 0;
       int water = 0;
 
-      if (LigthRelay.IsOn()){
+      if (relays[LIGHT].IsOn()){
         lights = 1;
       }
       else
         lights = 0;
 
-      if (HeaterRelay.IsOn()){
+      if (relays[HEATER].IsOn()){
         heating = 1;
       }
       else
         heating = 0;
 
-      if (WaterRelay.IsOn()){
+      if (relays[WATER].IsOn()){
         water = 1;
       }
       else water = 0;

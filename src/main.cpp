@@ -44,6 +44,7 @@ void Statistics() {
 }
 
 void Heater() {
+
   String p = server.arg("p");
   String i = server.arg("i");
   String d = server.arg("d");
@@ -56,7 +57,7 @@ void Heater() {
   if (IsNumeric(i)){
     heaterKd = (double)d.toInt();
   }
-  sprintf(buffer, "Current heater pid values p: %d %s i: %d %s d:%d %s",heaterKp, p.c_str(), heaterKi, i.c_str(), heaterKd, d.c_str());
+  sprintf(buffer, "Current heater pid values p: %d %s i: %d %s d:%d %s\n",heaterKp, p.c_str(), heaterKi, i.c_str(), heaterKd, d.c_str());
   server.send(200, "text/plain", buffer);
 }
 
@@ -102,14 +103,13 @@ void setup(void){
 
   Serial.println("Init TP");
   network.Init(&server, &wifiClient, &httpClient, &wifiMulti);
-  tp101.Init(&network);// = new Tp101(network);
+  tp101.Init(&network);
 
   Serial.println("Starting webserver");
   SetupServer();
   Serial.println("Setup done");
 
   scheduler.add(0, STATISTICS_TIMER,updateStatistics);
-
 }
 
 void loop(void){
