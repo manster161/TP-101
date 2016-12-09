@@ -22,6 +22,10 @@ public:
   double GetHumidity();
   char* GetStatus(char* buffer, size_t bufferSize);
   const char* GetNetwork();
+  void SetHeaterPid(double, double, double);
+  void SetWaterPid(double, double, double);
+  void GetHeaterPid(char *);
+  void GetWaterPid(char *); 
 
 private:
   Network* network;

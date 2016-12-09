@@ -25,9 +25,6 @@ int windowSize = 5000;
 long heaterStartTime;
 long waterStartTime;
 
-extern double heaterKp, heaterKi, heaterKd;
-extern double waterKp, waterKi, waterKd;
-
 int waterWindowSize = 5000;
 int heaterWindowSize = 5000;
 
@@ -45,11 +42,12 @@ unsigned long _previousMillis = 0;
 unsigned long _postInterval = 60000;
 
 
+
 MoistureSensor moisturesensor;
 TimeService timeservice;
 PID pidArray [] = {
-  PID(&_temperature, &heaterOuput, &heaterSetpoint, heaterKp,heaterKi,heaterKd, DIRECT),
-  PID(&_moisture, &moistureOuput, &moistureSetpoint, waterKp,waterKi,waterKd, DIRECT),
+  PID(&_temperature, &heaterOuput, &heaterSetpoint, 2,5,1, DIRECT),
+  PID(&_moisture, &moistureOuput, &moistureSetpoint, 2,5,1, DIRECT),
 };
 
 Relay relays[] = {
@@ -69,6 +67,26 @@ Tp101::~Tp101(){
 
 }
 
+
+void SetPid(int pidIndex, double p, double i, double d){
+  pidArray[pidIndex].SetTunings(p, i, d);
+}
+void Tp101::SetHeaterPid(double p, double i, double d){
+  SetPid(HEATER, p, i, d);
+}
+
+void GetPid(char* buffer,int pidIndex){
+  sprintf(buffer,"p: %d, i: %d, d: %d", pidArray[pidIndex].GetKp(), pidArray[pidIndex].GetKi(), pidArray[pidIndex].GetKd());
+}
+void Tp101::GetHeaterPid(char * buffer){
+  GetPid(buffer,HEATER);
+}
+void Tp101::GetWaterPid(char * buffer){
+  GetPid(buffer,WATER);
+}
+void Tp101::SetWaterPid(double p, double i, double d){
+  SetPid(WATER, p, i, d);
+}
 void Tp101::Init(Network* network){
 
   relays[LIGHT].Off();
@@ -151,12 +169,32 @@ void Tp101::ControlMoisture(){
 }
 
 void Tp101::HandlePID(){
-  ControlMoisture();
-  ControlHeater();
+  //ControlMoisture();
+  //ControlHeater();
  }
 
 
 void Tp101::Handle(){
+
+
+  float temp =  dht.readTemperature(false);
+
+  if (temp < 23){
+    relays[HEATER].On();
+  }
+  if (temp > 24){
+    relays[HEATER].Off();
+  }
+
+  _moisture = moisturesensor.Read();
+
+  if (_moisture < 30){
+    relays[WATER].On();
+  }
+  if (_moisture > 60){
+    relays[WATER].On();
+  }
+
 
   int currentHour = timeservice.GetCurrentHour();
 

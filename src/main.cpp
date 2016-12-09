@@ -22,8 +22,7 @@ TickerScheduler scheduler(1);
 TickerScheduler pidScheduler(2);
 Tp101 tp101;
 
-double heaterKp=2, heaterKi=5, heaterKd=1;
-double waterKp=2, waterKi=5, waterKd=1;
+
 
 
 bool IsNumeric(String s){
@@ -48,17 +47,13 @@ void Heater() {
   String p = server.arg("p");
   String i = server.arg("i");
   String d = server.arg("d");
-  if (IsNumeric(p)){
-    
-    heaterKp = (double)p.toInt();
+  if (IsNumeric(p) && IsNumeric(i) && IsNumeric(d)){
+      tp101.SetHeaterPid((double)p.toInt(), (double)p.toInt(), (double)p.toInt());
   }
-  if (IsNumeric(i)){
-    heaterKi = (double)i.toInt();
-  }
-  if (IsNumeric(i)){
-    heaterKd = (double)d.toInt();
-  }
-  sprintf(buffer, "Current heater pid values p: %d %s i: %d %s d:%d %s\n",heaterKp, p.c_str(), heaterKi, i.c_str(), heaterKd, d.c_str());
+  char pidbuffer[24];
+  tp101.GetHeaterPid(pidbuffer);
+
+  sprintf(buffer, "Current heater pid values %s\n",pidbuffer);
   server.send(200, "text/plain", buffer);
 }
 
@@ -67,17 +62,16 @@ void Pump() {
   String p = server.arg("p");
   String i = server.arg("i");
   String d = server.arg("d");
-  if (IsNumeric(p)){
-    heaterKp = (double)p.toInt();
+
+  if (IsNumeric(p) && IsNumeric(i) && IsNumeric(d)){
+      tp101.SetWaterPid((double)p.toInt(), (double)p.toInt(), (double)p.toInt());
   }
-  if (IsNumeric(i)){
-    heaterKi = (double)i.toInt();
-  }
-  if (IsNumeric(i)){
-    heaterKd = (double)d.toInt();
-  }
-  sprintf(buffer, "Current pump pid values\vp: %d\ni: %d\nd:%d",heaterKp, heaterKi, heaterKd);
-  server.send(200, "text/plain", buffer);
+  char pidbuffer[24];
+  tp101.GetWaterPid(pidbuffer);
+
+  sprintf(buffer, "Current water pid values %s\n",pidbuffer);
+  server.send(200, "text/plain", String("Values: ") + p + i + d);// buffer);
+
 }
 
 bool SetupServer(){
