@@ -11,43 +11,26 @@
 #define WATER 3
 
 
+
 DHT dht(DHTPIN, DHTTYPE, 11);
 StaticJsonBuffer<4096> jsonBuffer;
 JsonArray& root = jsonBuffer.createArray();
 JsonObject& sensors = root.createNestedObject().createNestedObject("network");
 JsonObject& readings = root.createNestedObject().createNestedObject("readings");
 JsonObject& timeObj = root.createNestedObject().createNestedObject("time");
-
-char localTimeBuffer[20];
-int lightsOn = 7;
-int lightsOff = 23;
-int windowSize = 5000;
-long heaterStartTime;
-long waterStartTime;
-
-int waterWindowSize = 5000;
-int heaterWindowSize = 5000;
-
-
 extern char* global_thingSpeakApiKey;
-char tpTextBuffer[256];
-double _temperature, heaterOuput;
-double _moisture, moistureOuput;
-double heaterSetpoint = 24;
-double moistureSetpoint = 70;
-double _humidity;
 
-int foundNetworks = 0;
-unsigned long _previousMillis = 0;
-unsigned long _postInterval = 60000;
-
-
+double temperature, heaterOuput;
+double moisture, moistureOuput;
+double heaterSetpoint;
+double moistureSetpoint;
+int foundNetworks;
 
 MoistureSensor moisturesensor;
 TimeService timeservice;
 PID pidArray [] = {
-  PID(&_temperature, &heaterOuput, &heaterSetpoint, 2,5,1, DIRECT),
-  PID(&_moisture, &moistureOuput, &moistureSetpoint, 2,5,1, DIRECT),
+  PID(&temperature, &heaterOuput, &heaterSetpoint, 2,5,1, DIRECT),
+  PID(&moisture, &moistureOuput, &moistureSetpoint, 0.25,2,0.15, DIRECT),
 };
 
 Relay relays[] = {
@@ -72,22 +55,43 @@ void SetPid(int pidIndex, double p, double i, double d){
   pidArray[pidIndex].SetTunings(p, i, d);
 }
 void Tp101::SetHeaterPid(double p, double i, double d){
-  SetPid(HEATER, p, i, d);
+  SetPid(HeaterPID, p, i, d);
 }
 
 void GetPid(char* buffer,int pidIndex){
   sprintf(buffer,"p: %d, i: %d, d: %d", pidArray[pidIndex].GetKp(), pidArray[pidIndex].GetKi(), pidArray[pidIndex].GetKd());
 }
+
 void Tp101::GetHeaterPid(char * buffer){
-  GetPid(buffer,HEATER);
+  GetPid(buffer,HeaterPID);
 }
+
 void Tp101::GetWaterPid(char * buffer){
-  GetPid(buffer,WATER);
+  GetPid(buffer,WaterPID);
 }
+
 void Tp101::SetWaterPid(double p, double i, double d){
-  SetPid(WATER, p, i, d);
+  SetPid(WaterPID, p, i, d);
 }
+
 void Tp101::Init(Network* network){
+
+  moisturesensor.Init();
+
+  heaterSetpoint = 24;
+  moistureSetpoint = 70;
+  foundNetworks = 0;
+
+   _lightsOn  =  7;
+   _lightsOff = 23;
+
+  _windowSize = 5000;
+  _waterWindowSize = 1000;
+  _heaterWindowSize = 5000;
+  _postInterval = 60000;
+  _previousMillis = 0;
+  _useHeaterPid = false;
+  _useWaterPid = false;
 
   relays[LIGHT].Off();
   relays[HEATER].Off();
@@ -97,7 +101,8 @@ void Tp101::Init(Network* network){
   timeservice.Init(network->GetWiFiClient());
   Serial.println("network initialization done");
   timeservice.UpdateTime();
-  heaterStartTime= millis();
+  _heaterStartTime= millis();
+  _waterStartTime = millis();
   pidArray[HEATER].SetOutputLimits(0, 5000);
   pidArray[HEATER].SetMode(AUTOMATIC);
   pidArray[WATER].SetOutputLimits(0, 5000);
@@ -105,7 +110,7 @@ void Tp101::Init(Network* network){
 }
 
 double Tp101::GetTemperature(){
-  return _temperature;
+  return temperature;
 }
 
 double Tp101::GetHumidity(){
@@ -117,18 +122,18 @@ void Tp101::ControlHeater(){
   float temp =  dht.readTemperature(false);     // Read humidity (percent)
 
   if (temp >= 0 && temp <= 100)
-    _temperature = temp;
+    temperature = temp;
 
   pidArray[HeaterPID].Compute();
 
   unsigned long now = millis();
 
-  if(now - heaterStartTime > heaterWindowSize)
+  if(now - _heaterStartTime > _heaterWindowSize)
   { //time to shift the Relay Window
-    heaterStartTime += heaterWindowSize;
+    _heaterStartTime += _heaterWindowSize;
   }
 
-  if(heaterOuput > now - heaterStartTime){
+  if(heaterOuput > now - _heaterStartTime){
     if (!relays[HEATER].IsOn()){
       Serial.println("Switching on heating");
     }
@@ -144,17 +149,17 @@ void Tp101::ControlHeater(){
 
 void Tp101::ControlMoisture(){
 
-  _moisture = moisturesensor.Read();
+  moisture = moisturesensor.Read();
 
   pidArray[WaterPID].Compute();
   unsigned long now = millis();
 
-  if(now - waterStartTime > waterWindowSize)
+  if(now - _waterStartTime > _waterWindowSize)
   { //time to shift the Relay Window
-    waterStartTime += waterWindowSize;
+    _waterStartTime += _waterWindowSize;
   }
 
-  if(moistureOuput > now - waterStartTime){
+  if(moistureOuput > now - _waterStartTime){
     if (!relays[WATER].IsOn()){
       Serial.println("Let it rain!");
     }
@@ -169,36 +174,47 @@ void Tp101::ControlMoisture(){
 }
 
 void Tp101::HandlePID(){
-  //ControlMoisture();
-  //ControlHeater();
+
+  if (_useWaterPid){
+    ControlMoisture();
+  }
+  if (_useHeaterPid){
+    ControlHeater();
+  }
+
  }
 
 
 void Tp101::Handle(){
-
-
   float temp =  dht.readTemperature(false);
 
   if (temp < 23){
     relays[HEATER].On();
-  }
-  if (temp > 24){
+    _useHeaterPid = false;
+  } else if (temp > 25){
+    _useHeaterPid = false;
     relays[HEATER].Off();
   }
-
-  _moisture = moisturesensor.Read();
-
-  if (_moisture < 30){
-    relays[WATER].On();
-  }
-  if (_moisture > 60){
-    relays[WATER].On();
+  else{
+    _useHeaterPid = true;
   }
 
+  moisture = moisturesensor.Read();
+
+  if (moisture < 30){
+    relays[WATER].On();
+    _useWaterPid = false;
+  } else if (moisture > 60){
+    relays[WATER].On();
+    _useWaterPid = false;
+  }
+  else{
+    _useWaterPid = true;
+  }
 
   int currentHour = timeservice.GetCurrentHour();
 
-  if (currentHour >= lightsOn && currentHour <= lightsOff)
+  if (currentHour >= _lightsOn && currentHour <= _lightsOff)
   {
     if (!relays[LIGHT].IsOn()){
         Serial.println("Its day now, letting the sun come out");
@@ -216,9 +232,9 @@ void Tp101::Handle(){
 
     sensors["ipaddress"] = network->GetIp();
     sensors["network"] = network->GetNetwork();
-    readings["temp"] = _temperature;
-    readings["humidity"] = _humidity;
-    readings["moisture"] = _moisture;
+    readings["temp"] = GetTemperature();
+    readings["humidity"] = GetHumidity();
+    readings["moisture"] = moisturesensor.Read();
 
     if (relays[LIGHT].IsOn())
       readings["lamp"] = "on";
@@ -227,22 +243,22 @@ void Tp101::Handle(){
 
       readings["lampRunningTime"] = String(relays[LIGHT].OpenTimeSinceReset());
 
-      if (relays[HEATER].IsOn())
+    if (relays[HEATER].IsOn())
         readings["heating"] = "on";
-      else
-        readings["heating"] = "off";
+    else
+      readings["heating"] = "off";
 
-      readings["heatingRunningTime"] = String(relays[HEATER].OpenTimeSinceReset());
+    readings["heatingRunningTime"] = String(relays[HEATER].OpenTimeSinceReset());
 
-      if (relays[WATER].IsOn())
-        readings["pump"] = "on";
-      else
-        readings["pump"] = "off";
+    if (relays[WATER].IsOn())
+      readings["pump"] = "on";
+    else
+      readings["pump"] = "off";
 
-        readings["pumpRunningTime"] = String(relays[WATER].OpenTimeSinceReset());
+    readings["pumpRunningTime"] = String(relays[WATER].OpenTimeSinceReset());
 
 
-    timeObj["localtime"] = timeservice.GetLocalTime(localTimeBuffer, 19);
+    timeObj["localtime"] = timeservice.GetLocalTime(_localTimeBuffer, 19);
     timeObj["timestamp"] = String(timeservice.GetTimestamp());
 
 
@@ -283,7 +299,7 @@ void Tp101::UpdateStatistics(){
       }
       else water = 0;
 
-      network->UpdateThingspeak(_temperature, _humidity, _moisture,  heating, lights, water);
+      network->UpdateThingspeak(temperature, _humidity, moisture,  heating, lights, water);
   }
   else
   {

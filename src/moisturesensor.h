@@ -8,6 +8,7 @@ class MoistureSensor  {
 public:
   MoistureSensor();
   ~MoistureSensor();
+  void Init();
   void UpdateCalibrationValues();
   int Read(void);
 

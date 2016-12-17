@@ -25,10 +25,25 @@ public:
   void SetHeaterPid(double, double, double);
   void SetWaterPid(double, double, double);
   void GetHeaterPid(char *);
-  void GetWaterPid(char *); 
+  void GetWaterPid(char *);
 
 private:
   Network* network;
+  char _localTimeBuffer[20];
+
+  long _heaterStartTime;
+  long _waterStartTime;
+
+  int _lightsOn;
+  int _lightsOff;
+  int _windowSize = 5000;
+  int _waterWindowSize = 5000;
+  int _heaterWindowSize = 5000;
+  unsigned long _postInterval = 60000;
+  unsigned long _previousMillis = 0;
+  bool _useHeaterPid = false;
+  bool _useWaterPid = false;
+  double _humidity;
 };
 
 

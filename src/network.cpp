@@ -7,7 +7,7 @@ String webString;
 String thingspeak = "api.thingspeak.com";
 
 const char* ssid = "Alexanderplatz";
-int connectionTimeout = 5000;
+int connectionTimeout;
 extern const char* global_thingSpeakApiKey;
 extern int foundNetworks;
 
@@ -18,6 +18,7 @@ Network::Network(){
 bool Network::Init(ESP8266WebServer* server, WiFiClient* wifiClient,HTTPClient* httpClient, ESP8266WiFiMulti* wifiMulti)
 {
 
+  connectionTimeout = 5000;
   this->server = server;
   this->wifiClient = wifiClient;
   this->httpClient = httpClient;
@@ -116,7 +117,6 @@ String Network::GetIp(){
 const char* Network::GetNetwork(){
   return ssid;
 }
-
 
 
 void Network::UpdateThingspeak(int temp, int humidity, int moisture, int heating, int lights, int water){

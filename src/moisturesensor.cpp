@@ -4,13 +4,18 @@
   static unsigned int minValue;
 
   MoistureSensor::MoistureSensor(){
-    pinMode(A0, INPUT);
-    maxValue = 1023;
-    minValue = 0;
+
   }
   MoistureSensor::~MoistureSensor(){
 
   }
+
+  void MoistureSensor::Init(){
+    pinMode(A0, INPUT);
+    maxValue = 1023;
+    minValue = 0;
+  }
+
 
 void MoistureSensor::UpdateCalibrationValues() {
   unsigned int currentValue = analogRead(A0);
@@ -31,6 +36,3 @@ void MoistureSensor::UpdateCalibrationValues() {
     Serial.println(soil);
     return soil;
   }
-
-
-  

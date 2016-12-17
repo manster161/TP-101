@@ -7,15 +7,14 @@ public:
   void On(void);
   void Off(void);
   bool IsOn(void);
-  char*  GetStatus();
+  char*  GetStatus(char*);
   long OpenTimeSinceReset();
   char GetPin();
 private:
+  const char * _name;
   char _pin;
   bool _isOn = false;
-  char _buffer[20];
-  char _namebuffer[10];
-  long startMillis, totalRunningTime;
+  long _startMillis, _totalRunningTime;
 };
 
 #endif
