@@ -5,7 +5,7 @@ String timezonedb = "api.timezonedb.com";
 extern const char* global_timezoneDbApiKey;
 
 TimeService::TimeService(){
-  
+
 }
 
 TimeService::~TimeService(){
@@ -63,6 +63,7 @@ void TimeService::UpdateTime(){
         Serial.printf("Timestamp: %d\n", ts);
         String formatted = root["formatted"].asString();
         Serial.println(formatted);
+        Serial.println("SetTime(ts)");
         setTime(ts);
         break;
       }

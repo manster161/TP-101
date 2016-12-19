@@ -27,8 +27,9 @@ Tp101 tp101;
 
 bool IsNumeric(String s){
   for (int i = 0; i < s.length(); i++){
-    if (!isDigit(s[0]))
-    return false;
+    if (!isDigit(s[0])){
+      return false;
+    }  
   }
   return true;
 }

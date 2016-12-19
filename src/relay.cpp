@@ -18,14 +18,18 @@
 
   void Relay::On(){
 
-    if (!_isOn)
+    Serial.printf("Switching ON %s\n", _name);
+    if (!_isOn){
       _startMillis = millis();
+    }
+
 
     digitalWrite(_pin, HIGH);
     _isOn = true;
   }
 
   void Relay::Off(){
+      Serial.printf("Switching OFF %s\n", _name);
     if (_isOn){
       _totalRunningTime += millis() - _startMillis;
     }

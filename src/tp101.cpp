@@ -5,6 +5,7 @@
 
 #define HeaterPID 0
 #define WaterPID 1
+
 #define LIGHT  0
 #define HEATER 1
 #define AIR 2
@@ -76,7 +77,7 @@ void Tp101::SetWaterPid(double p, double i, double d){
 
 void Tp101::Init(Network* network){
 
-  moisturesensor.Init();
+
 
   heaterSetpoint = 24;
   moistureSetpoint = 70;
@@ -93,6 +94,7 @@ void Tp101::Init(Network* network){
   _useHeaterPid = false;
   _useWaterPid = false;
 
+  moisturesensor.Init();
   relays[LIGHT].Off();
   relays[HEATER].Off();
   relays[AIR].Off();
@@ -103,10 +105,12 @@ void Tp101::Init(Network* network){
   timeservice.UpdateTime();
   _heaterStartTime= millis();
   _waterStartTime = millis();
-  pidArray[HEATER].SetOutputLimits(0, 5000);
-  pidArray[HEATER].SetMode(AUTOMATIC);
-  pidArray[WATER].SetOutputLimits(0, 5000);
-  pidArray[WATER].SetMode(AUTOMATIC);
+  Serial.println("Setting pidArray[HEATER]");
+  pidArray[HeaterPID].SetOutputLimits(0, 5000);
+  pidArray[HeaterPID].SetMode(AUTOMATIC);
+    Serial.println("Setting pidArray[WATER]");
+  pidArray[WaterPID].SetOutputLimits(0, 5000);
+  pidArray[WaterPID].SetMode(AUTOMATIC);
 }
 
 double Tp101::GetTemperature(){
@@ -174,16 +178,13 @@ void Tp101::ControlMoisture(){
 }
 
 void Tp101::HandlePID(){
-
   if (_useWaterPid){
     ControlMoisture();
   }
   if (_useHeaterPid){
     ControlHeater();
   }
-
  }
-
 
 void Tp101::Handle(){
   float temp =  dht.readTemperature(false);
@@ -211,7 +212,7 @@ void Tp101::Handle(){
   else{
     _useWaterPid = true;
   }
-
+/*
   int currentHour = timeservice.GetCurrentHour();
 
   if (currentHour >= _lightsOn && currentHour <= _lightsOff)
@@ -225,7 +226,7 @@ void Tp101::Handle(){
         Serial.println("Its night again, see you tomorrow");
     }
     relays[LIGHT].Off();
-  }
+  }*/
 }
 
  char* Tp101::GetStatus(char* buffer, size_t bufferSize){
