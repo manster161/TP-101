@@ -18,8 +18,9 @@
 
   void Relay::On(){
 
-    Serial.printf("Switching ON %s\n", _name);
+
     if (!_isOn){
+      Serial.printf("Switching ON %s\n", _name);
       _startMillis = millis();
     }
 
@@ -29,8 +30,9 @@
   }
 
   void Relay::Off(){
-      Serial.printf("Switching OFF %s\n", _name);
+
     if (_isOn){
+        Serial.printf("Switching OFF %s\n", _name);
       _totalRunningTime += millis() - _startMillis;
     }
 

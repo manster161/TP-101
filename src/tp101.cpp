@@ -13,7 +13,7 @@
 
 
 
-DHT dht(DHTPIN, DHTTYPE, 11);
+DHT dht(DHTPIN, DHTTYPE);
 StaticJsonBuffer<4096> jsonBuffer;
 JsonArray& root = jsonBuffer.createArray();
 JsonObject& sensors = root.createNestedObject().createNestedObject("network");
@@ -34,11 +34,21 @@ PID pidArray [] = {
   PID(&moisture, &moistureOuput, &moistureSetpoint, 0.25,2,0.15, DIRECT),
 };
 
+/*
+#define RELAY1PIN 16
+#define RELAY2PIN 14
+#define RELAY3PIN 12
+#define RELAY4PIN 13
+
+ //brun
+
+*/
+
 Relay relays[] = {
-  Relay(13, "Lights"),
-  Relay(12, "Heating"),
-  Relay(14, "Ventilation"),
-  Relay(16, "Water"),
+  Relay(16, "Lights"),
+  Relay(14, "Heating"),
+  Relay(12, "Ventilation"),
+  Relay(13, "Water"),
 };
 
 
@@ -94,6 +104,8 @@ void Tp101::Init(Network* network){
   _useHeaterPid = false;
   _useWaterPid = false;
 
+  dht.begin();
+
   moisturesensor.Init();
   relays[LIGHT].Off();
   relays[HEATER].Off();
@@ -125,6 +137,10 @@ void Tp101::ControlHeater(){
 
   float temp =  dht.readTemperature(false);     // Read humidity (percent)
 
+  if (isnan(temp)) {
+    Serial.println("Failed to read from DHT sensor!");
+
+  }
   if (temp >= 0 && temp <= 100)
     temperature = temp;
 
@@ -138,15 +154,11 @@ void Tp101::ControlHeater(){
   }
 
   if(heaterOuput > now - _heaterStartTime){
-    if (!relays[HEATER].IsOn()){
-      Serial.println("Switching on heating");
-    }
+
     relays[HEATER].On();
   }
   else {
-    if (relays[HEATER].IsOn()){
-      Serial.println("Switching off heating");
-    }
+
     relays[HEATER].Off();
 }
 }
@@ -189,10 +201,16 @@ void Tp101::HandlePID(){
 void Tp101::Handle(){
   float temp =  dht.readTemperature(false);
 
-  if (temp < 23){
+
+  if (isnan(temp)) {
+    Serial.println("Failed to read from DHT sensor!");
+
+  }
+  
+  if (temp < 20){
     relays[HEATER].On();
     _useHeaterPid = false;
-  } else if (temp > 25){
+  } else if (temp > 29){
     _useHeaterPid = false;
     relays[HEATER].Off();
   }
@@ -212,7 +230,7 @@ void Tp101::Handle(){
   else{
     _useWaterPid = true;
   }
-/*
+
   int currentHour = timeservice.GetCurrentHour();
 
   if (currentHour >= _lightsOn && currentHour <= _lightsOff)
@@ -226,7 +244,7 @@ void Tp101::Handle(){
         Serial.println("Its night again, see you tomorrow");
     }
     relays[LIGHT].Off();
-  }*/
+  }
 }
 
  char* Tp101::GetStatus(char* buffer, size_t bufferSize){
@@ -307,4 +325,8 @@ void Tp101::UpdateStatistics(){
     int secondsTillUpdate = (int) (_postInterval - elapsedTime)/1000;
 
   }
+  char buff[50];
+
+  sprintf(buff, "Temp: %d, Humidity %d", temperature, _humidity);
+  Serial.println(buff);
 }

@@ -2,7 +2,7 @@
 #define _SETTINGS_H_
 
 #define DHTTYPE DHT11
-#define DHTPIN  4
+#define DHTPIN  5
 
 //tx  rx  gpio4 gpio5 A gpio16 gpio14 gpio12 gpio13
 

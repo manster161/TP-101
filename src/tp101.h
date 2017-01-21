@@ -2,6 +2,7 @@
 #define _TP_H_
 #include "relay.h"
 #include <DHT.h>
+#include <Adafruit_Sensor.h>
 #include "network.h"
 #include <ArduinoJson.h>
 #include "moisturesensor.h"
