@@ -20,7 +20,7 @@ JsonObject& sensors = root.createNestedObject().createNestedObject("network");
 JsonObject& readings = root.createNestedObject().createNestedObject("readings");
 JsonObject& timeObj = root.createNestedObject().createNestedObject("time");
 extern char* global_thingSpeakApiKey;
-
+float humidity;
 double temperature, heaterOuput;
 double moisture, moistureOuput;
 double heaterSetpoint;
@@ -62,6 +62,23 @@ Tp101::~Tp101(){
 }
 
 
+
+void ReadTempAndHumidity() {
+  // Wait a few seconds between measurements.
+  delay(2000);
+  // Reading temperature or humidity takes about 250 milliseconds!
+  // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
+  humidity = dht.readHumidity();
+  // Read temperature as Celsius (the default)
+  temperature = dht.readTemperature();
+  // Read temperature as Fahrenheit (isFahrenheit = true)
+
+  // Check if any reads failed and exit early (to try again).
+  if (isnan(temperature) || isnan(humidity)) {
+    Serial.println("Failed to read from DHT sensor!");
+    return;
+  }
+}
 void SetPid(int pidIndex, double p, double i, double d){
   pidArray[pidIndex].SetTunings(p, i, d);
 }
@@ -87,8 +104,6 @@ void Tp101::SetWaterPid(double p, double i, double d){
 
 void Tp101::Init(Network* network){
 
-
-
   heaterSetpoint = 24;
   moistureSetpoint = 70;
   foundNetworks = 0;
@@ -101,8 +116,6 @@ void Tp101::Init(Network* network){
   _heaterWindowSize = 5000;
   _postInterval = 60000;
   _previousMillis = 0;
-  _useHeaterPid = false;
-  _useWaterPid = false;
 
   dht.begin();
 
@@ -130,19 +143,10 @@ double Tp101::GetTemperature(){
 }
 
 double Tp101::GetHumidity(){
-  return _humidity;
+  return humidity;
 }
 
 void Tp101::ControlHeater(){
-
-  float temp =  dht.readTemperature(false);     // Read humidity (percent)
-
-  if (isnan(temp)) {
-    Serial.println("Failed to read from DHT sensor!");
-
-  }
-  if (temp >= 0 && temp <= 100)
-    temperature = temp;
 
   pidArray[HeaterPID].Compute();
 
@@ -190,46 +194,11 @@ void Tp101::ControlMoisture(){
 }
 
 void Tp101::HandlePID(){
-  if (_useWaterPid){
     ControlMoisture();
-  }
-  if (_useHeaterPid){
     ControlHeater();
-  }
  }
 
 void Tp101::Handle(){
-  float temp =  dht.readTemperature(false);
-
-
-  if (isnan(temp)) {
-    Serial.println("Failed to read from DHT sensor!");
-
-  }
-  
-  if (temp < 20){
-    relays[HEATER].On();
-    _useHeaterPid = false;
-  } else if (temp > 29){
-    _useHeaterPid = false;
-    relays[HEATER].Off();
-  }
-  else{
-    _useHeaterPid = true;
-  }
-
-  moisture = moisturesensor.Read();
-
-  if (moisture < 30){
-    relays[WATER].On();
-    _useWaterPid = false;
-  } else if (moisture > 60){
-    relays[WATER].On();
-    _useWaterPid = false;
-  }
-  else{
-    _useWaterPid = true;
-  }
 
   int currentHour = timeservice.GetCurrentHour();
 
@@ -276,10 +245,8 @@ void Tp101::Handle(){
 
     readings["pumpRunningTime"] = String(relays[WATER].OpenTimeSinceReset());
 
-
     timeObj["localtime"] = timeservice.GetLocalTime(_localTimeBuffer, 19);
     timeObj["timestamp"] = String(timeservice.GetTimestamp());
-
 
     root.prettyPrintTo(Serial);
     root.printTo(buffer, bufferSize);
@@ -287,10 +254,8 @@ void Tp101::Handle(){
 }
 
 void Tp101::UpdateStatistics(){
-  int hum = dht.readHumidity();
 
-  if (hum >= 0 && hum <= 100)
-    _humidity = hum;
+    ReadTempAndHumidity();
 
     unsigned long currentMillis = millis();
     unsigned long elapsedTime = currentMillis - _previousMillis;
@@ -318,7 +283,7 @@ void Tp101::UpdateStatistics(){
       }
       else water = 0;
 
-      network->UpdateThingspeak(temperature, _humidity, moisture,  heating, lights, water);
+      network->UpdateThingspeak(temperature, humidity, moisture,  heating, lights, water);
   }
   else
   {

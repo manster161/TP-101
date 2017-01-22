@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include <Adafruit_Sensor.h>
 #include <DHT.h>
-#include <ESP8266WebServer.h>
+//#include <ESP8266WebServer.h>
 #include <TickerScheduler.h>
 #include "tp101.h"
 
@@ -29,7 +29,7 @@ bool IsNumeric(String s){
   for (int i = 0; i < s.length(); i++){
     if (!isDigit(s[0])){
       return false;
-    }  
+    }
   }
   return true;
 }

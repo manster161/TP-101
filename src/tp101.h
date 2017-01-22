@@ -42,9 +42,7 @@ private:
   int _heaterWindowSize = 5000;
   unsigned long _postInterval = 60000;
   unsigned long _previousMillis = 0;
-  bool _useHeaterPid = false;
-  bool _useWaterPid = false;
-  double _humidity;
+  float _humidity;
 };
 
 
